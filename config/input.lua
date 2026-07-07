@@ -19,12 +19,6 @@ hl.config({
 	},
 })
 
--- hl.gesture({
--- 	fingers = 3,
--- 	direction = "horizontal",
--- 	action = "scroll_move",
--- })
-
 hl.device({
 	name = " mx-anywhere-2s-mouse",
 	sensitivity = -0.5, -- -1.0 - 1.0, 0 means no modification.

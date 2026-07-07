@@ -21,7 +21,7 @@ hl.monitor({
 	mode = "preferred",
 	position = "auto",
 	scale = "1.5",
-	icc = "/home/yihao/.local/share/icc/p3.icm",
+	icc = "/home/yihao/.local/share/icc/default.icm",
 	-- cm = "auto",
 	bitdepth = 10,
 })
@@ -58,14 +58,10 @@ local function toggle_built_in_display()
 		return
 	end
 
-	if lid_closed then
-		return
-	end
+	if lid_closed then return end
 
 	built_in_disabled = not built_in_disabled
-	if built_in_disabled then
-		toggle_built_in = true
-	end
+	if built_in_disabled then toggle_built_in = true end
 	hl.monitor({ output = "eDP-1", disabled = built_in_disabled })
 end
 
@@ -93,9 +89,7 @@ local function mirror_screen()
 
 		-- Focus the built in display after a short delay to prevent the spawned wl-mirror
 		-- window from stealing focus
-		hl.timer(function()
-			hl.dispatch(hl.dsp.focus({ monitor = "eDP-1" }))
-		end, { timeout = 50, type = "oneshot" })
+		hl.timer(function() hl.dispatch(hl.dsp.focus({ monitor = "eDP-1" })) end, { timeout = 50, type = "oneshot" })
 	end
 end
 
@@ -121,9 +115,7 @@ hl.define_submap("displayControl", "reset", function()
 		hl.bind(b.key, b.fn)
 	end
 
-	hl.bind("catchall", function()
-		hl.notification.create({ text = "Escaping display control", duration = 3000 })
-	end)
+	hl.bind("catchall", function() hl.notification.create({ text = "Escaping display control", duration = 3000 }) end)
 end)
 
 hl.on("monitor.removed", function()

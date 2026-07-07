@@ -2,7 +2,11 @@
 ---- KEYBINDINGS ----
 ---------------------
 
+local utils = require("config.utils")
+local has_neighbor, lt, gt = utils.has_neighbor, utils.lt, utils.gt
+
 local constants = require("config.constants")
+local layout = require("config.appearance").layout
 local mainMod = constants.mainMod
 local noctPrefix = constants.noctPrefix
 
@@ -19,9 +23,7 @@ hl.bind(mainMod .. " + A", hl.dsp.exec_cmd(constants.noctPrefix .. " panel-toggl
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd(constants.noctPrefix .. " panel-toggle clipboard"))
 hl.bind("ALT + Tab", function()
 	for _, layer in ipairs(hl.get_layers()) do
-		if layer.namespace == "noctalia-window-switcher" then
-			return
-		end
+		if layer.namespace == "noctalia-window-switcher" then return end
 	end
 	hl.dispatch(hl.dsp.exec_cmd(constants.noctPrefix .. " window-switcher"))
 end, { non_consuming = true })
@@ -33,40 +35,97 @@ hl.bind(mainMod .. " + SHIFT + F23", hl.dsp.exec_cmd(constants.menu))
 hl.bind(mainMod .. " + V", function()
 	hl.dispatch(hl.dsp.window.float({ toggle = true }))
 	local monitor = hl.get_active_monitor()
-	if monitor then
-		hl.dispatch(hl.dsp.window.resize({ x = monitor.width / 2, y = monitor.height / 2 }))
-	end
+	if monitor then hl.dispatch(hl.dsp.window.resize({ x = monitor.width / 2, y = monitor.height / 2 })) end
 end)
-hl.bind(mainMod .. " + T", hl.dsp.layout("togglesplit")) -- dwindle only
+if layout == "dwindle" then
+	hl.bind(mainMod .. " + T", hl.dsp.layout("togglesplit")) -- dwindle only
+elseif layout == "scrolling" then
+	hl.bind(mainMod .. " + T", hl.dsp.layout("consume_or_expel prev"))
+end
 hl.bind(mainMod .. " + F", function()
 	local opts = { action = "toggle", internal = 2, client = 2 }
 	-- prevent helium from going fullscreen and hiding sidebar
 	local class = hl.get_active_window().initial_class
-	if class == "helium" or class == "brave-origin-nightly" then
-		opts.client = 0
-	end
+	if class == "helium" or class == "brave-origin-nightly" then opts.client = 0 end
 	hl.dispatch(hl.dsp.window.fullscreen_state(opts))
 end)
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind("ALT + mouse:272", hl.dsp.window.resize(), { mouse = true })
 
 -- Move focus with mainMod + arrow keys
-hl.bind(mainMod .. " + H", hl.dsp.focus({ direction = "left" }))
-hl.bind(mainMod .. " + L", hl.dsp.focus({ direction = "right" }))
-hl.bind(mainMod .. " + K", hl.dsp.focus({ direction = "up" }))
-hl.bind(mainMod .. " + J", hl.dsp.focus({ direction = "down" }))
+if layout == "dwindle" then
+	hl.bind(mainMod .. " + H", hl.dsp.focus({ direction = "left" }))
+	hl.bind(mainMod .. " + L", hl.dsp.focus({ direction = "right" }))
+	hl.bind(mainMod .. " + K", hl.dsp.focus({ direction = "up" }))
+	hl.bind(mainMod .. " + J", hl.dsp.focus({ direction = "down" }))
+elseif layout == "scrolling" then
+	hl.bind(mainMod .. " + H", function()
+		if has_neighbor("x", lt) then
+			hl.dispatch(hl.dsp.layout("focus l"))
+		else
+			hl.dispatch(hl.dsp.focus({ direction = "left" }))
+		end
+	end)
+	hl.bind(mainMod .. " + L", function()
+		if has_neighbor("x", gt) then
+			hl.dispatch(hl.dsp.layout("focus r"))
+		else
+			hl.dispatch(hl.dsp.focus({ direction = "right" }))
+		end
+	end)
+	hl.bind(mainMod .. " + K", function()
+		if has_neighbor("y", lt) then
+			hl.dispatch(hl.dsp.layout("focus u"))
+		else
+			hl.dispatch(hl.dsp.focus({ workspace = "r-1" }))
+		end
+	end)
+	hl.bind(mainMod .. " + J", function()
+		if has_neighbor("y", gt) then
+			hl.dispatch(hl.dsp.layout("focus d"))
+		else
+			hl.dispatch(hl.dsp.focus({ workspace = "r+1" }))
+		end
+	end)
+end
 
 -- Move the windows
-hl.bind(mainMod .. " + SHIFT + H", hl.dsp.window.move({ direction = "left" }))
-hl.bind(mainMod .. " + SHIFT + L", hl.dsp.window.move({ direction = "right" }))
-hl.bind(mainMod .. " + SHIFT + K", hl.dsp.window.move({ direction = "up" }))
-hl.bind(mainMod .. " + SHIFT + J", hl.dsp.window.move({ direction = "down" }))
+if layout == "dwindle" then
+	hl.bind(mainMod .. " + SHIFT + H", function() hl.dsp.window.move({ direction = "left" }) end)
+	hl.bind(mainMod .. " + SHIFT + L", hl.dsp.window.move({ direction = "right" }))
+	hl.bind(mainMod .. " + SHIFT + K", hl.dsp.window.move({ direction = "up" }))
+	hl.bind(mainMod .. " + SHIFT + J", hl.dsp.window.move({ direction = "down" }))
+elseif layout == "scrolling" then
+	hl.bind(mainMod .. " + SHIFT + H", hl.dsp.layout("swapcol l"))
+	hl.bind(mainMod .. " + SHIFT + L", hl.dsp.layout("swapcol r"))
+	hl.bind(mainMod .. " + SHIFT + K", function()
+		if has_neighbor("y", lt) then
+			hl.dispatch(hl.dsp.window.move({ direction = "up" }))
+		else
+			hl.dispatch(hl.dsp.window.move({ workspace = "r-1" }))
+		end
+	end)
+	hl.bind(mainMod .. " + SHIFT + J", function()
+		if has_neighbor("y", gt) then
+			hl.dispatch(hl.dsp.window.move({ direction = "down" }))
+		else
+			hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
+		end
+	end)
+end
 
 -- Resize windows
-hl.bind(mainMod .. " + ALT + H", hl.dsp.window.resize({ x = -50, y = 0, relative = true }), { repeating = true })
-hl.bind(mainMod .. " + ALT + L", hl.dsp.window.resize({ x = 50, y = 0, relative = true }), { repeating = true })
-hl.bind(mainMod .. " + ALT + J", hl.dsp.window.resize({ x = 0, y = 50, relative = true }), { repeating = true })
-hl.bind(mainMod .. " + ALT + K", hl.dsp.window.resize({ x = 0, y = -50, relative = true }), { repeating = true })
+if layout == "dwindle" then
+	hl.bind(mainMod .. " + ALT + H", hl.dsp.window.resize({ x = -50, y = 0, relative = true }), { repeating = true })
+	hl.bind(mainMod .. " + ALT + L", hl.dsp.window.resize({ x = 50, y = 0, relative = true }), { repeating = true })
+	hl.bind(mainMod .. " + ALT + J", hl.dsp.window.resize({ x = 0, y = 50, relative = true }), { repeating = true })
+	hl.bind(mainMod .. " + ALT + K", hl.dsp.window.resize({ x = 0, y = -50, relative = true }), { repeating = true })
+else
+	hl.bind(mainMod .. " + ALT + H", hl.dsp.layout("colresize -0.1"), { repeating = true })
+	hl.bind(mainMod .. " + ALT + L", hl.dsp.layout("colresize +0.1"), { repeating = true })
+	hl.bind(mainMod .. " + ALT + J", hl.dsp.window.resize({ x = 0, y = 50, relative = true }), { repeating = true })
+	hl.bind(mainMod .. " + ALT + K", hl.dsp.window.resize({ x = 0, y = -50, relative = true }), { repeating = true })
+end
 
 -- Switch workspaces with mainMod + [0-9]
 -- Move active window to a workspace with mainMod + SHIFT + [0-9]
@@ -80,12 +139,8 @@ hl.bind(mainMod .. " + N", hl.dsp.focus({ workspace = "m+1" }))
 hl.bind(mainMod .. " + CTRL + N", hl.dsp.focus({ workspace = "m-1" }))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.focus({ workspace = "prev" }))
 hl.bind(mainMod .. " + ALT + N", hl.dsp.focus({ workspace = "emptym", on_current_monitor = true }))
-hl.gesture({
-	fingers = 3,
-	direction = "horizontal",
-	action = "workspace",
-})
-
+hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "r+1" }), { mouse = true })
+hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "r-1" }), { mouse = true })
 -- Swap monitors
 hl.bind(mainMod .. " + SHIFT + T", hl.dsp.workspace.swap_monitors({ monitor1 = "current", monitor2 = "+1" }))
 hl.bind(mainMod .. " + ALT + T", hl.dsp.workspace.move({ monitor = "+1" }))

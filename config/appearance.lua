@@ -2,6 +2,8 @@
 ---- LOOK AND FEEL ----
 -----------------------
 
+local active_layout = "scrolling" -- "dwindle", "master", "scrolling"
+
 -- Refer to https://wiki.hypr.land/Configuring/Basics/Variables/
 hl.config({
 	general = {
@@ -21,8 +23,7 @@ hl.config({
 		-- Please see https://wiki.hypr.land/Configuring/Advanced-and-Cool/Tearing/ before you turn this on
 		allow_tearing = false,
 
-		layout = "dwindle",
-		-- layout = "scrolling",
+		layout = active_layout,
 	},
 
 	decoration = {
@@ -57,12 +58,27 @@ hl.config({
 	},
 
 	render = {
+		-- disables gamma correction for the compositor
+		-- needed for night light through wlr-gamma-control to work
+		icc_vcgt_enabled = false,
 		cm_auto_hdr = true,
 	},
 
 	binds = {
 		drag_threshold = 30,
 		hide_special_on_workspace_change = true,
+	},
+
+	dwindle = {
+		force_split = 2,
+		preserve_split = true, -- You probably want this
+	},
+
+	-- See https://wiki.hypr.land/Configuring/Layouts/Scrolling-Layout/ for more
+	scrolling = {
+		fullscreen_on_one_column = true,
+		wrap_focus = false,
+		wrap_swapcol = false,
 	},
 })
 
@@ -72,6 +88,7 @@ hl.curve("easeInOutCubic", { type = "bezier", points = { { 0.65, 0.05 }, { 0.36,
 hl.curve("linear", { type = "bezier", points = { { 0, 0 }, { 1, 1 } } })
 hl.curve("almostLinear", { type = "bezier", points = { { 0.5, 0.5 }, { 0.75, 1 } } })
 hl.curve("quick", { type = "bezier", points = { { 0.15, 0 }, { 0.1, 1 } } })
+hl.curve("springy", { type = "spring", mass = 1.8, stiffness = 76, dampening = 20 })
 
 -- Default springs
 hl.curve("easy", { type = "spring", mass = 1, stiffness = 71.2633, dampening = 15.8273644 })
@@ -89,9 +106,12 @@ hl.animation({ leaf = "layersIn", enabled = true, speed = 4, bezier = "easeOutQu
 hl.animation({ leaf = "layersOut", enabled = true, speed = 1.5, bezier = "linear", style = "fade" })
 hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 1.79, bezier = "almostLinear" })
 hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 1.39, bezier = "almostLinear" })
-hl.animation({ leaf = "workspaces", enabled = true, speed = 1.94, bezier = "almostLinear", style = "fade" })
-hl.animation({ leaf = "workspacesIn", enabled = true, speed = 1.21, bezier = "almostLinear", style = "fade" })
-hl.animation({ leaf = "workspacesOut", enabled = true, speed = 1.94, bezier = "almostLinear", style = "fade" })
+hl.animation({ leaf = "workspaces", enabled = true, speed = 1.44, spring = "springy", style = "slide top" })
+
+local workspace_anim_style = "fade"
+if active_layout ~= "dwindle" then workspace_anim_style = "slidevert" end
+hl.animation({ leaf = "workspacesIn", enabled = true, speed = 1.21, spring = "easy", style = workspace_anim_style })
+hl.animation({ leaf = "workspacesOut", enabled = true, speed = 1.94, spring = "easy", style = workspace_anim_style })
 hl.animation({ leaf = "zoomFactor", enabled = true, speed = 7, bezier = "quick" })
 
 -- Ref https://wiki.hypr.land/Configuring/Basics/Workspace-Rules/
@@ -116,24 +136,24 @@ hl.window_rule({
 	rounding = 5,
 })
 
--- See https://wiki.hypr.land/Configuring/Layouts/Dwindle-Layout/ for more
-hl.config({
-	dwindle = {
-		force_split = 2,
-		preserve_split = true, -- You probably want this
-	},
-})
+if active_layout == "dwindle" then
+	hl.gesture({
+		fingers = 3,
+		direction = "horizontal",
+		action = "workspace",
+	})
+elseif active_layout == "scrolling" then
+	hl.gesture({
+		fingers = 3,
+		direction = "horizontal",
+		action = "scroll_move",
+		scale = 7,
+	})
+	hl.gesture({
+		fingers = 3,
+		direction = "vertical",
+		action = "workspace",
+	})
+end
 
--- See https://wiki.hypr.land/Configuring/Layouts/Master-Layout/ for more
-hl.config({
-	master = {
-		new_status = "master",
-	},
-})
-
--- See https://wiki.hypr.land/Configuring/Layouts/Scrolling-Layout/ for more
-hl.config({
-	scrolling = {
-		fullscreen_on_one_column = true,
-	},
-})
+return { layout = active_layout }

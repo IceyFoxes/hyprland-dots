@@ -49,8 +49,14 @@ hl.layer_rule({
 
 hl.layer_rule({
 	name = "hide-notifications",
-	match = { namespace = "noctalia-notifications-.*$" },
+	match = { namespace = "noctalia-notification$" },
 	no_screen_share = true,
+})
+
+hl.window_rule({
+	match = { initial_title = "Noctalia Settings" },
+	no_screen_share = true,
+	workspace = "current",
 })
 
 hl.window_rule({

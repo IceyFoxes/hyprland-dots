@@ -1,9 +1,8 @@
 local mainMod = require("config.constants").mainMod
+local layout = require("config.appearance").layout
 
 local function setup_hyprexpo()
-	if hl.plugin.hyprexpo == nil then
-		return
-	end
+	if hl.plugin.hyprexpo == nil then return end
 
 	hl.config({
 		plugin = {
@@ -20,52 +19,85 @@ local function setup_hyprexpo()
 		},
 	})
 
-	hl.bind(mainMod .. "+ tab", function()
-		hl.plugin.hyprexpo.expo("toggle")
-	end)
+	hl.bind(mainMod .. "+ tab", function() hl.plugin.hyprexpo.expo("toggle") end)
 
 	hl.gesture({
 		fingers = 3,
 		direction = "up",
-		action = function()
-			hl.plugin.hyprexpo.expo("open")
-		end,
+		action = function() hl.plugin.hyprexpo.expo("open") end,
 	})
 
 	hl.gesture({
 		fingers = 3,
 		direction = "down",
-		action = function()
-			hl.plugin.hyprexpo.expo("close")
-		end,
+		action = function() hl.plugin.hyprexpo.expo("close") end,
 	})
 
 	hl.define_submap("hyprexpo", function()
-		hl.bind("h", function()
-			hl.plugin.hyprexpo.kb_focus("left")
-		end)
-		hl.bind("l", function()
-			hl.plugin.hyprexpo.kb_focus("right")
-		end)
-		hl.bind("k", function()
-			hl.plugin.hyprexpo.kb_focus("up")
-		end)
-		hl.bind("j", function()
-			hl.plugin.hyprexpo.kb_focus("down")
-		end)
+		hl.bind("h", function() hl.plugin.hyprexpo.kb_focus("left") end)
+		hl.bind("l", function() hl.plugin.hyprexpo.kb_focus("right") end)
+		hl.bind("k", function() hl.plugin.hyprexpo.kb_focus("up") end)
+		hl.bind("j", function() hl.plugin.hyprexpo.kb_focus("down") end)
+		hl.bind("return", function() hl.plugin.hyprexpo.kb_confirm() end)
+		hl.bind("escape", function() hl.plugin.hyprexpo.expo("cancel") end)
+	end)
+end
+
+local function setup_hyprscroll_overview()
+	if hl.plugin.scrolloverview == nil then return end
+
+	-- .config/hypr/hyprland.lua
+	hl.config({
+		plugin = {
+			scrolloverview = {
+				gesture_distance = 100, -- how far is the "max" for the gesture
+				scale = 0.5, -- preferred overview scale
+				workspace_gap = 50,
+				layout = "vertical", -- vertical or horizontal
+				wallpaper = 0, -- 0: global only, 1: per-workspace only, 2: both
+				blur = true, -- blur only the main overview wallpaper
+
+				shadow = {
+					enabled = false,
+					range = 50,
+					render_power = 3,
+					color = 0xee1a1a1a,
+				},
+			},
+		},
+	})
+
+	hl.gesture({
+		fingers = 3,
+		direction = "pinchout",
+		action = function() hl.dispatch(hl.plugin.scrolloverview.overview("on")) end,
+	})
+
+	hl.gesture({
+		fingers = 3,
+		direction = "pinchin",
+		action = function() hl.dispatch(hl.plugin.scrolloverview.overview("off")) end,
+	})
+
+	hl.bind(mainMod .. " + tab", function() hl.plugin.scrolloverview.overview("toggle") end)
+
+	hl.define_submap("scrolloverview", function()
+		hl.bind("h", hl.plugin.scrolloverview.navigate("left"))
+		hl.bind("l", hl.plugin.scrolloverview.navigate("right"))
+		hl.bind("k", hl.plugin.scrolloverview.navigate("up"))
+		hl.bind("j", hl.plugin.scrolloverview.navigate("down"))
+		hl.bind("d", hl.plugin.scrolloverview.window("close"))
 		hl.bind("return", function()
-			hl.plugin.hyprexpo.kb_confirm()
+			hl.plugin.scrolloverview.overview("select")
+			hl.plugin.scrolloverview.overview("off")
 		end)
-		hl.bind("escape", function()
-			hl.plugin.hyprexpo.expo("cancel")
-		end)
+		hl.bind("escape", hl.plugin.scrolloverview.overview("off"))
+		hl.bind("mouse:274", function() hl.plugin.scrolloverview.window("close") end, { mouse = true })
 	end)
 end
 
 local function setup_dynamic_cursors()
-	if hl.plugin.dynamic_cursors == nil then
-		return
-	end
+	if hl.plugin.dynamic_cursors == nil then return end
 
 	hl.config({
 		plugin = {
@@ -200,5 +232,6 @@ local function setup_dynamic_cursors()
 	})
 end
 
-setup_hyprexpo()
+if layout == "dwindle" then setup_hyprexpo() end
+if layout == "scrolling" then setup_hyprscroll_overview() end
 setup_dynamic_cursors()
