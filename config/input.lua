@@ -22,6 +22,14 @@ hl.config({
 hl.device({
 	name = " mx-anywhere-2s-mouse",
 	sensitivity = -0.5, -- -1.0 - 1.0, 0 means no modification.
+	accel_profile = "flat",
+})
+
+hl.device({
+	name = "syna2ba6:00-06cb:cf00-touchpad",
+	sensitivity = 0.2,
+	accel_profile = "adaptive",
+	drag_lock = 1,
 })
 
 hl.device({
