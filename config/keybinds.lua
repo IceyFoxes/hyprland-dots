@@ -45,8 +45,11 @@ end
 hl.bind(mainMod .. " + F", function()
 	local opts = { action = "toggle", internal = 2, client = 2 }
 	-- prevent helium from going fullscreen and hiding sidebar
-	local class = hl.get_active_window().initial_class
-	if class == "helium" or class == "brave-origin-nightly" then opts.client = 0 end
+	local window = hl.get_active_window()
+	if window then
+		local class = window.class
+		if class == "helium" or class == "brave-origin-nightly" then opts.client = 0 end
+	end
 	hl.dispatch(hl.dsp.window.fullscreen_state(opts))
 end)
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
@@ -87,17 +90,35 @@ elseif layout == "scrolling" then
 			hl.dispatch(hl.dsp.focus({ workspace = "r+1" }))
 		end
 	end)
+	hl.bind(mainMod .. " + mouse_down", hl.dsp.layout("focus l"), { mouse = true, non_consuming = false })
+	hl.bind(mainMod .. " + mouse_up", hl.dsp.layout("focus r"), { mouse = true, non_consuming = false })
 end
 
 -- Move the windows
 if layout == "dwindle" then
-	hl.bind(mainMod .. " + SHIFT + H", function() hl.dsp.window.move({ direction = "left" }) end)
+	hl.bind(mainMod .. " + SHIFT + H", hl.dsp.window.move({ direction = "left" }))
 	hl.bind(mainMod .. " + SHIFT + L", hl.dsp.window.move({ direction = "right" }))
 	hl.bind(mainMod .. " + SHIFT + K", hl.dsp.window.move({ direction = "up" }))
 	hl.bind(mainMod .. " + SHIFT + J", hl.dsp.window.move({ direction = "down" }))
+	hl.bind(mainMod .. " + N", hl.dsp.focus({ workspace = "m+1" }))
+	hl.bind(mainMod .. " + CTRL + N", hl.dsp.focus({ workspace = "m-1" }))
+	hl.bind(mainMod .. " + SHIFT + N", hl.dsp.focus({ workspace = "prev" }))
+	hl.bind(mainMod .. " + ALT + N", hl.dsp.focus({ workspace = "emptym", on_current_monitor = true }))
 elseif layout == "scrolling" then
-	hl.bind(mainMod .. " + SHIFT + H", hl.dsp.layout("swapcol l"))
-	hl.bind(mainMod .. " + SHIFT + L", hl.dsp.layout("swapcol r"))
+	hl.bind(mainMod .. " + SHIFT + H", function()
+		if has_neighbor("y", lt) or has_neighbor("y", gt) then
+			hl.dispatch(hl.dsp.window.move({ direction = "left" }))
+		else
+			hl.dispatch(hl.dsp.layout("swapcol l"))
+		end
+	end)
+	hl.bind(mainMod .. " + SHIFT + L", function()
+		if has_neighbor("y", lt) or has_neighbor("y", gt) then
+			hl.dispatch(hl.dsp.window.move({ direction = "right" }))
+		else
+			hl.dispatch(hl.dsp.layout("swapcol r"))
+		end
+	end)
 	hl.bind(mainMod .. " + SHIFT + K", function()
 		if has_neighbor("y", lt) then
 			hl.dispatch(hl.dsp.window.move({ direction = "up" }))
@@ -112,6 +133,15 @@ elseif layout == "scrolling" then
 			hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
 		end
 	end)
+	-- hl.bind(mainMod .. " + N", function()
+	-- 	local ws = hl.get_active_workspace()
+	-- 	if not ws then return end
+	-- 	if not hl.get_workspace(ws.id + 1) then
+	-- 		hl.dispatch(hl.dsp.workspace.change_id({ workspace = ws.id, id = ws.id + 1 }))
+	-- 	else
+	-- 		hl.dispatch(hl.dsp.focus({ workspace = "emptym", on_current_monitor = true }))
+	-- 	end
+	-- end)
 end
 
 -- Resize windows
@@ -135,12 +165,8 @@ for i = 1, 10 do
 end
 
 -- Switch to next/previous workspace
-hl.bind(mainMod .. " + N", hl.dsp.focus({ workspace = "m+1" }))
-hl.bind(mainMod .. " + CTRL + N", hl.dsp.focus({ workspace = "m-1" }))
-hl.bind(mainMod .. " + SHIFT + N", hl.dsp.focus({ workspace = "prev" }))
-hl.bind(mainMod .. " + ALT + N", hl.dsp.focus({ workspace = "emptym", on_current_monitor = true }))
-hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "r+1" }), { mouse = true })
-hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "r-1" }), { mouse = true })
+hl.bind(mainMod .. " + SHIFT + mouse_down", hl.dsp.focus({ workspace = "r-1" }), { mouse = true })
+hl.bind(mainMod .. " + SHIFT + mouse_up", hl.dsp.focus({ workspace = "r+1" }), { mouse = true })
 -- Swap monitors
 hl.bind(mainMod .. " + SHIFT + T", hl.dsp.workspace.swap_monitors({ monitor1 = "current", monitor2 = "+1" }))
 hl.bind(mainMod .. " + ALT + T", hl.dsp.workspace.move({ monitor = "+1" }))
