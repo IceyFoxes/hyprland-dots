@@ -60,7 +60,7 @@ hl.window_rule({
 })
 
 hl.window_rule({
-	match = { class = "org.mozilla.Thunderbird", initial_title = "negative:Mozilla Thunderbird" },
+	match = { class = "org.mozilla.Thunderbird", initial_title = "negative:Mozilla Thunderbird|Write.*" },
 	float = true,
 	workspace = "current",
 })
@@ -81,6 +81,7 @@ hl.window_rule({
 		class = "org.telegram.desktop",
 		title = "Media viewer",
 	},
+	float = true,
 	workspace = "current",
 	fullscreen = true,
 })
@@ -89,13 +90,6 @@ hl.window_rule({
 	match = { class = "org.telegram.desktop", title = "Choose Files" },
 	float = true,
 	workspace = "current",
-})
-
--- waydroid
-hl.window_rule({
-	match = { class = "Waydroid" },
-	fullscreen = true,
-	workspace = "emptynm",
 })
 
 -- zoom
@@ -138,4 +132,9 @@ hl.window_rule({
 hl.window_rule({
 	match = { class = "DesktopEditors" },
 	center = true,
+})
+
+hl.window_rule({
+	match = { class = "xdg-desktop-portal-gtk" },
+	size = { "(monitor_w*0.5)", "(monitor_h*0.5)" },
 })

@@ -1,5 +1,7 @@
 local mainMod = require("config.constants").mainMod
 local layout = require("config.appearance").layout
+local utils = require("config.utils")
+local has_neighbor, lt, gt = utils.has_neighbor, utils.lt, utils.gt
 
 local function setup_hyprexpo()
 	if hl.plugin.hyprexpo == nil then return end
@@ -51,8 +53,8 @@ local function setup_hyprscroll_overview()
 		plugin = {
 			scrolloverview = {
 				gesture_distance = 100, -- how far is the "max" for the gesture
-				scale = 0.5, -- preferred overview scale
-				workspace_gap = 50,
+				scale = 0.3, -- preferred overview scale
+				workspace_gap = 20,
 				layout = "vertical", -- vertical or horizontal
 				wallpaper = 0, -- 0: global only, 1: per-workspace only, 2: both
 				blur = true, -- blur only the main overview wallpaper
@@ -82,16 +84,50 @@ local function setup_hyprscroll_overview()
 	hl.bind(mainMod .. " + tab", function() hl.plugin.scrolloverview.overview("toggle") end)
 
 	hl.define_submap("scrolloverview", function()
+		-- navigate the overview
 		hl.bind("h", hl.plugin.scrolloverview.navigate("left"))
 		hl.bind("l", hl.plugin.scrolloverview.navigate("right"))
 		hl.bind("k", hl.plugin.scrolloverview.navigate("up"))
 		hl.bind("j", hl.plugin.scrolloverview.navigate("down"))
-		hl.bind("d", hl.plugin.scrolloverview.window("close"))
-		hl.bind("return", function()
+
+		-- move the windows
+		hl.bind(mainMod .. " + H", function()
+			if has_neighbor("y", lt) or has_neighbor("y", gt) then
+				hl.dispatch(hl.dsp.window.move({ direction = "left" }))
+			else
+				hl.dispatch(hl.dsp.layout("swapcol l"))
+			end
+		end)
+		hl.bind(mainMod .. " + L", function()
+			if has_neighbor("y", lt) or has_neighbor("y", gt) then
+				hl.dispatch(hl.dsp.window.move({ direction = "right" }))
+			else
+				hl.dispatch(hl.dsp.layout("swapcol r"))
+			end
+		end)
+		hl.bind(mainMod .. " + K", function()
+			if has_neighbor("y", lt) then
+				hl.dispatch(hl.dsp.window.move({ direction = "up" }))
+			else
+				hl.dispatch(hl.dsp.window.move({ workspace = "r-1" }))
+			end
+		end)
+		hl.bind(mainMod .. " + J", function()
+			if has_neighbor("y", gt) then
+				hl.dispatch(hl.dsp.window.move({ direction = "down" }))
+			else
+				hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
+			end
+		end)
+		hl.bind("T", hl.dsp.layout("consume_or_expel prev"), { ignore_mods = true })
+		hl.bind("D", hl.plugin.scrolloverview.window("close"))
+
+		hl.bind("return", hl.plugin.scrolloverview.overview("off"))
+		hl.bind("escape", hl.plugin.scrolloverview.overview("off"))
+		hl.bind("mouse:272", function()
 			hl.plugin.scrolloverview.overview("select")
 			hl.plugin.scrolloverview.overview("off")
-		end)
-		hl.bind("escape", hl.plugin.scrolloverview.overview("off"))
+		end, { mouse = true })
 		hl.bind("mouse:274", function() hl.plugin.scrolloverview.window("close") end, { mouse = true })
 	end)
 end
