@@ -13,6 +13,7 @@ local noctPrefix = constants.noctPrefix
 -- open apps
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(constants.terminal))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(constants.browser))
+hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd(constants.browser .. " --incognito"))
 hl.bind(mainMod .. " + W", hl.dsp.window.close())
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.window.signal({ signal = 9 }))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(constants.fileManager))
@@ -133,15 +134,41 @@ elseif layout == "scrolling" then
 			hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
 		end
 	end)
-	-- hl.bind(mainMod .. " + N", function()
-	-- 	local ws = hl.get_active_workspace()
-	-- 	if not ws then return end
-	-- 	if not hl.get_workspace(ws.id + 1) then
-	-- 		hl.dispatch(hl.dsp.workspace.change_id({ workspace = ws.id, id = ws.id + 1 }))
-	-- 	else
-	-- 		hl.dispatch(hl.dsp.focus({ workspace = "emptym", on_current_monitor = true }))
-	-- 	end
-	-- end)
+	local function move_workspace_id(direction)
+		local ws = hl.get_active_workspace()
+		if not ws then return end
+
+		local curr_id = ws.id
+		local target_id = curr_id + direction
+		if target_id < 1 then return end
+
+		local target_ws = hl.get_workspace(target_id)
+		while target_ws and target_ws.monitor ~= ws.monitor do
+			target_id = target_id + direction
+			if target_id < 1 then return end
+			target_ws = hl.get_workspace(target_id)
+		end
+
+		if not target_ws then
+			hl.dispatch(hl.dsp.workspace.change_id({ workspace = curr_id, id = target_id }))
+		else
+			hl.timer(
+				function() hl.dispatch(hl.dsp.workspace.change_id({ workspace = target_id, id = 99 })) end,
+				{ timeout = 1, type = "oneshot" }
+			)
+			hl.timer(
+				function() hl.dispatch(hl.dsp.workspace.change_id({ workspace = curr_id, id = target_id })) end,
+				{ timeout = 10, type = "oneshot" }
+			)
+			hl.timer(
+				function() hl.dispatch(hl.dsp.workspace.change_id({ workspace = 99, id = curr_id })) end,
+				{ timeout = 20, type = "oneshot" }
+			)
+		end
+	end
+
+	hl.bind(mainMod .. " + CTRL + J", function() move_workspace_id(1) end)
+	hl.bind(mainMod .. " + CTRL + K", function() move_workspace_id(-1) end)
 end
 
 -- Resize windows
@@ -221,8 +248,16 @@ hl.bind(
 	hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),
 	{ locked = true, repeating = true }
 )
-hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(noctPrefix .. " brightness-up"), { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd(noctPrefix .. " brightness-down"), { locked = true, repeating = true })
+hl.bind(
+	"XF86MonBrightnessUp",
+	hl.dsp.exec_cmd(noctPrefix .. " brightness-up all 5"),
+	{ locked = true, repeating = true }
+)
+hl.bind(
+	"XF86MonBrightnessDown",
+	hl.dsp.exec_cmd(noctPrefix .. " brightness-down all 5"),
+	{ locked = true, repeating = true }
+)
 
 hl.bind("XF86Calculator", hl.dsp.exec_cmd(noctPrefix .. " media toggle"), { locked = true })
 

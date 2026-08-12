@@ -5,6 +5,7 @@ local has_neighbor, lt, gt = utils.has_neighbor, utils.lt, utils.gt
 
 local function setup_hyprexpo()
 	if hl.plugin.hyprexpo == nil then return end
+	local he = hl.plugin.hyprexpo
 
 	hl.config({
 		plugin = {
@@ -21,32 +22,33 @@ local function setup_hyprexpo()
 		},
 	})
 
-	hl.bind(mainMod .. "+ tab", function() hl.plugin.hyprexpo.expo("toggle") end)
+	hl.bind(mainMod .. "+ tab", function() he.expo("toggle") end)
 
 	hl.gesture({
 		fingers = 3,
 		direction = "up",
-		action = function() hl.plugin.hyprexpo.expo("open") end,
+		action = function() he.expo("open") end,
 	})
 
 	hl.gesture({
 		fingers = 3,
 		direction = "down",
-		action = function() hl.plugin.hyprexpo.expo("close") end,
+		action = function() he.expo("close") end,
 	})
 
 	hl.define_submap("hyprexpo", function()
-		hl.bind("h", function() hl.plugin.hyprexpo.kb_focus("left") end)
-		hl.bind("l", function() hl.plugin.hyprexpo.kb_focus("right") end)
-		hl.bind("k", function() hl.plugin.hyprexpo.kb_focus("up") end)
-		hl.bind("j", function() hl.plugin.hyprexpo.kb_focus("down") end)
-		hl.bind("return", function() hl.plugin.hyprexpo.kb_confirm() end)
-		hl.bind("escape", function() hl.plugin.hyprexpo.expo("cancel") end)
+		hl.bind("h", function() he.kb_focus("left") end)
+		hl.bind("l", function() he.kb_focus("right") end)
+		hl.bind("k", function() he.kb_focus("up") end)
+		hl.bind("j", function() he.kb_focus("down") end)
+		hl.bind("return", function() he.kb_confirm() end)
+		hl.bind("escape", function() he.expo("cancel") end)
 	end)
 end
 
 local function setup_hyprscroll_overview()
 	if hl.plugin.scrolloverview == nil then return end
+	local so = hl.plugin.scrolloverview
 
 	-- .config/hypr/hyprland.lua
 	hl.config({
@@ -72,23 +74,23 @@ local function setup_hyprscroll_overview()
 	hl.gesture({
 		fingers = 3,
 		direction = "pinchout",
-		action = function() hl.dispatch(hl.plugin.scrolloverview.overview("on")) end,
+		action = function() hl.dispatch(so.overview("on")) end,
 	})
 
 	hl.gesture({
 		fingers = 3,
 		direction = "pinchin",
-		action = function() hl.dispatch(hl.plugin.scrolloverview.overview("off")) end,
+		action = function() hl.dispatch(so.overview("off")) end,
 	})
 
-	hl.bind(mainMod .. " + tab", function() hl.plugin.scrolloverview.overview("toggle") end)
+	hl.bind(mainMod .. " + tab", function() so.overview("toggle") end)
 
 	hl.define_submap("scrolloverview", function()
 		-- navigate the overview
-		hl.bind("h", hl.plugin.scrolloverview.navigate("left"))
-		hl.bind("l", hl.plugin.scrolloverview.navigate("right"))
-		hl.bind("k", hl.plugin.scrolloverview.navigate("up"))
-		hl.bind("j", hl.plugin.scrolloverview.navigate("down"))
+		hl.bind("h", so.navigate("left"))
+		hl.bind("l", so.navigate("right"))
+		hl.bind("k", so.navigate("up"))
+		hl.bind("j", so.navigate("down"))
 
 		-- move the windows
 		hl.bind(mainMod .. " + H", function()
@@ -120,15 +122,15 @@ local function setup_hyprscroll_overview()
 			end
 		end)
 		hl.bind("T", hl.dsp.layout("consume_or_expel prev"), { ignore_mods = true })
-		hl.bind("D", hl.plugin.scrolloverview.window("close"))
+		hl.bind("D", so.window("close"))
 
-		hl.bind("return", hl.plugin.scrolloverview.overview("off"))
-		hl.bind("escape", hl.plugin.scrolloverview.overview("off"))
+		hl.bind("return", so.overview("off"))
+		hl.bind("escape", so.overview("off"))
 		hl.bind("mouse:272", function()
-			hl.plugin.scrolloverview.overview("select")
-			hl.plugin.scrolloverview.overview("off")
+			so.overview("select")
+			so.overview("off")
 		end, { mouse = true })
-		hl.bind("mouse:274", function() hl.plugin.scrolloverview.window("close") end, { mouse = true })
+		hl.bind("mouse:274", function() so.window("close") end, { mouse = true })
 	end)
 end
 
@@ -268,6 +270,75 @@ local function setup_dynamic_cursors()
 	})
 end
 
+local function setup_glass()
+	if not hl.plugin.hyprglass then return end
+	local hg = hl.plugin.hyprglass
+
+	hg.config({
+		enabled = false,
+		default_theme = "dark",
+		default_preset = "clear",
+		tint_color = 0x8899aa22,
+
+		brightness = 0.9,
+		dark = { brightness = 0.82 },
+		light = { adaptive_boost = 0.5 },
+
+		layers = { enabled = 1 },
+	})
+
+	-- Layer surfaces: each call whitelists the namespace and configures it
+	-- hg.layer("noctalia-bar-Vertical", { preset = "glass", mask_threshold = 0.3 })
+	hg.layer(
+		"noctalia-notification",
+		{ preset = "notification-glass", mask_threshold = 0.3, realtime = true, realtime_fps = 30 }
+	)
+	hg.layer("noctalia-attached-panel", { preset = "glass", mask_threshold = 0.3, realtime = true, realtime_fps = 30 })
+	hg.layer("noctalia-panel", { preset = "glass", mask_threshold = 0.3, realtime = true, realtime_fps = 30 })
+
+	-- Presets
+	hg.preset("clear", {
+		glass_opacity = 0.8,
+		blur_strength = 1.5,
+		dark = { brightness = 0.7 },
+		light = { brightness = 1.2 },
+	})
+
+	hg.preset("glass", {
+		chromatic_aberration = 0.6,
+		blur_strength = 0.3,
+		blur_iterations = 4,
+		lens_distortion = 0.3,
+		refraction_strength = 8.0,
+		fresnel_strength = 0.4,
+		specular_strength = 0.8,
+		glass_opacity = 1.0,
+		edge_thickness = 0.05,
+		tint_color = 0xffffff00,
+	})
+
+	hg.preset("notification-glass", {
+		chromatic_aberration = 0.2,
+		blur_strength = 1.0,
+		blur_iterations = 2,
+		lens_distortion = 2.0,
+		refraction_strength = 2,
+		fresnel_strength = 0.4,
+		specular_strength = 0.8,
+		glass_opacity = 1.0,
+		edge_thickness = 0.03,
+		tint_color = 0xffffff00,
+	})
+
+	hg.preset("contrasted", {
+		inherits = "high_contrast",
+		contrast = 1.2,
+		adaptive_dim = 1.5,
+		dark = { tint_color = 0x02142aa9 },
+	})
+end
+
 if layout == "dwindle" then setup_hyprexpo() end
 if layout == "scrolling" then setup_hyprscroll_overview() end
 setup_dynamic_cursors()
+setup_glass()

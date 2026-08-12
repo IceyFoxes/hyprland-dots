@@ -13,6 +13,7 @@ hl.on("hyprland.start", function()
 	hl.exec_cmd("hypridle")
 	hl.exec_cmd("Telegram", { workspace = "special:magic" })
 	hl.exec_cmd("thunderbird", { workspace = "special:magic" })
+	hl.exec_cmd("brave-origin-nightly --app=https://web.whatsapp.com")
 
 	hl.exec_cmd("hyprpm reload")
 end)

@@ -89,7 +89,11 @@ hl.window_rule({
 hl.window_rule({
 	match = { class = "org.telegram.desktop", title = "Choose Files" },
 	float = true,
-	workspace = "current",
+})
+
+hl.window_rule({
+	match = { initial_class = "^brave-web[.]whatsapp[.]com__-Default$" },
+	workspace = "special:magic",
 })
 
 -- zoom

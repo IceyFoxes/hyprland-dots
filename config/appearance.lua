@@ -7,8 +7,8 @@ local active_layout = "scrolling" -- "dwindle", "master", "scrolling"
 -- Refer to https://wiki.hypr.land/Configuring/Basics/Variables/
 hl.config({
 	general = {
-		gaps_in = 2,
-		gaps_out = 4,
+		gaps_in = 1,
+		gaps_out = 2,
 
 		border_size = 1,
 
@@ -93,7 +93,7 @@ hl.curve("quick", { type = "bezier", points = { { 0.15, 0 }, { 0.1, 1 } } })
 hl.curve("easy", { type = "spring", mass = 0.8, stiffness = 540, dampening = 36 })
 
 hl.animation({ leaf = "global", enabled = true, speed = 10, bezier = "default" })
-hl.animation({ leaf = "border", enabled = true, speed = 3.39, bezier = "easeOutQuint" })
+hl.animation({ leaf = "border", enabled = true, speed = 3.39, spring = "easy" })
 hl.animation({ leaf = "windows", enabled = true, speed = 0.2, spring = "easy" })
 hl.animation({ leaf = "fadeIn", enabled = true, speed = 1.73, bezier = "almostLinear" })
 hl.animation({ leaf = "fadeOut", enabled = true, speed = 1.46, bezier = "almostLinear" })
