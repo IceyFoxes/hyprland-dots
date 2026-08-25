@@ -1,6 +1,5 @@
-local mainMod = require("config.constants").mainMod
-local layout = require("config.appearance").layout
-local utils = require("config.utils")
+local mainMod, layout, utils =
+	require("config.constants").mainMod, require("config.appearance").layout, require("config.utils")
 local has_neighbor, lt, gt = utils.has_neighbor, utils.lt, utils.gt
 
 local function setup_hyprexpo()
@@ -305,11 +304,11 @@ local function setup_glass()
 	})
 
 	hg.preset("glass", {
-		chromatic_aberration = 0.6,
-		blur_strength = 0.3,
-		blur_iterations = 4,
+		chromatic_aberration = 0.2,
+		blur_strength = 0.5,
+		blur_iterations = 3,
 		lens_distortion = 0.3,
-		refraction_strength = 8.0,
+		refraction_strength = 6.0,
 		fresnel_strength = 0.4,
 		specular_strength = 0.8,
 		glass_opacity = 1.0,
@@ -319,7 +318,7 @@ local function setup_glass()
 
 	hg.preset("notification-glass", {
 		chromatic_aberration = 0.2,
-		blur_strength = 1.0,
+		blur_strength = 0.5,
 		blur_iterations = 2,
 		lens_distortion = 2.0,
 		refraction_strength = 2,

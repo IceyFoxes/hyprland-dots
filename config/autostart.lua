@@ -4,6 +4,8 @@
 -- Or execute your favorite apps at launch like this:
 hl.on("hyprland.start", function()
 	-- important stuff
+	hl.exec_cmd("systemctl --user set-environment XDG_SESSION_CLASS=user")
+	hl.exec_cmd("systemctl --user start --no-block hyprland-session.target")
 	hl.exec_cmd("noctalia")
 	hl.exec_cmd("XDG_MENU_PREFIX=arch- kbuildsycoca6")
 	hl.exec_cmd("gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'")

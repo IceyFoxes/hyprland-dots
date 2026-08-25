@@ -13,7 +13,7 @@ hl.config({
 		border_size = 1,
 
 		col = {
-			active_border = { colors = { "rgba(eeae8abd)", "rgba(ae8abdee)" }, angle = 90 },
+			active_border = { colors = { "rgba(b7dabf9a)", "rgba(ae8abd9a)" }, angle = 60 },
 			inactive_border = "rgba(595959aa)",
 		},
 
@@ -27,7 +27,7 @@ hl.config({
 	},
 
 	decoration = {
-		rounding = 20,
+		rounding = 5,
 		rounding_power = 2,
 
 		-- Change transparency of focused and unfocused windows
@@ -38,7 +38,6 @@ hl.config({
 			enabled = true,
 			range = 4,
 			render_power = 3,
-			color = 0xee1a1a1a,
 		},
 
 		blur = {
@@ -93,7 +92,7 @@ hl.curve("quick", { type = "bezier", points = { { 0.15, 0 }, { 0.1, 1 } } })
 hl.curve("easy", { type = "spring", mass = 0.8, stiffness = 540, dampening = 36 })
 
 hl.animation({ leaf = "global", enabled = true, speed = 10, bezier = "default" })
-hl.animation({ leaf = "border", enabled = true, speed = 3.39, spring = "easy" })
+hl.animation({ leaf = "border", enabled = true, speed = 4, bezier = "linear" })
 hl.animation({ leaf = "windows", enabled = true, speed = 0.2, spring = "easy" })
 hl.animation({ leaf = "fadeIn", enabled = true, speed = 1.73, bezier = "almostLinear" })
 hl.animation({ leaf = "fadeOut", enabled = true, speed = 1.46, bezier = "almostLinear" })
@@ -127,10 +126,6 @@ hl.window_rule({
 	match = { float = false, workspace = "f[1]" },
 	border_size = 0,
 	rounding = 0,
-})
-hl.window_rule({
-	match = { class = ".*" },
-	rounding = 5,
 })
 
 if active_layout == "dwindle" then

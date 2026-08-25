@@ -138,6 +138,12 @@ hl.window_rule({
 	center = true,
 })
 
+-- libreoffice
+hl.window_rule({
+	match = { class = "libreoffice-impress", title = "Console:.*" },
+	suppress_event = "activate activatefocus",
+})
+
 hl.window_rule({
 	match = { class = "xdg-desktop-portal-gtk" },
 	size = { "(monitor_w*0.5)", "(monitor_h*0.5)" },

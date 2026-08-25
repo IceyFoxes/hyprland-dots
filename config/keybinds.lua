@@ -3,7 +3,8 @@
 ---------------------
 
 local utils = require("config.utils")
-local has_neighbor, lt, gt = utils.has_neighbor, utils.lt, utils.gt
+local has_neighbor, lt, gt, swap_workspaces, organize_workspace =
+	utils.has_neighbor, utils.lt, utils.gt, utils.swap_workspaces, utils.organize_workspaces
 
 local constants = require("config.constants")
 local layout = require("config.appearance").layout
@@ -152,18 +153,7 @@ elseif layout == "scrolling" then
 		if not target_ws then
 			hl.dispatch(hl.dsp.workspace.change_id({ workspace = curr_id, id = target_id }))
 		else
-			hl.timer(
-				function() hl.dispatch(hl.dsp.workspace.change_id({ workspace = target_id, id = 99 })) end,
-				{ timeout = 1, type = "oneshot" }
-			)
-			hl.timer(
-				function() hl.dispatch(hl.dsp.workspace.change_id({ workspace = curr_id, id = target_id })) end,
-				{ timeout = 10, type = "oneshot" }
-			)
-			hl.timer(
-				function() hl.dispatch(hl.dsp.workspace.change_id({ workspace = 99, id = curr_id })) end,
-				{ timeout = 20, type = "oneshot" }
-			)
+			swap_workspaces(curr_id, target_id)
 		end
 	end
 
@@ -202,13 +192,19 @@ hl.bind(mainMod .. " + ALT + T", hl.dsp.workspace.move({ monitor = "+1" }))
 hl.bind(mainMod .. " + S", hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 
+-- organize workspaces
+hl.bind(mainMod .. " + CTRL + O", function()
+	hl.notification.create({ text = "Organizing workspaces", timeout = 300 })
+	organize_workspace()
+end)
+
 -- Move windows to workspace
 hl.bind(mainMod .. " + M", function()
 	if hl.get_active_window() == nil then
-		hl.notification.create({ text = "No active window", duration = 3000 })
+		hl.notification.create({ text = "No active window", timeout = 3000 })
 		return
 	end
-	hl.notification.create({ text = "Select workspace to move window to", duration = 3000 })
+	hl.notification.create({ text = "Select workspace to move window to", timeout = 3000 })
 	hl.dispatch(hl.dsp.submap("moveToWorkspace"))
 end)
 
@@ -222,7 +218,7 @@ hl.define_submap("moveToWorkspace", function()
 	hl.bind("E", hl.dsp.window.move({ workspace = "emptym", on_current_monitor = true }))
 
 	hl.bind("escape", function()
-		hl.notification.create({ text = "Escaped moving window", duration = 2000 })
+		hl.notification.create({ text = "Escaped moving window", timeout = 2000 })
 		hl.dispatch(hl.dsp.submap("reset"))
 	end)
 end)
