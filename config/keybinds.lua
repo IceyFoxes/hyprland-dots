@@ -8,8 +8,7 @@ local has_neighbor, lt, gt, swap_workspaces, organize_workspace =
 
 local constants = require("config.constants")
 local layout = require("config.appearance").layout
-local mainMod = constants.mainMod
-local noctPrefix = constants.noctPrefix
+local mainMod, noctPrefix, timeout = constants.mainMod, constants.noctPrefix, constants.timeout
 
 -- open apps
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(constants.terminal))
@@ -194,17 +193,17 @@ hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:mag
 
 -- organize workspaces
 hl.bind(mainMod .. " + CTRL + O", function()
-	hl.notification.create({ text = "Organizing workspaces", timeout = 300 })
+	hl.notification.create({ text = "Organizing workspaces", timeout = timeout.medium })
 	organize_workspace()
 end)
 
 -- Move windows to workspace
 hl.bind(mainMod .. " + M", function()
 	if hl.get_active_window() == nil then
-		hl.notification.create({ text = "No active window", timeout = 3000 })
+		hl.notification.create({ text = "No active window", timeout = timeout.medium })
 		return
 	end
-	hl.notification.create({ text = "Select workspace to move window to", timeout = 3000 })
+	hl.notification.create({ text = "Select workspace to move window to", timeout = timeout.medium })
 	hl.dispatch(hl.dsp.submap("moveToWorkspace"))
 end)
 
@@ -215,10 +214,13 @@ hl.define_submap("moveToWorkspace", function()
 
 	hl.bind("N", hl.dsp.window.move({ workspace = "m+1" }))
 	hl.bind("P", hl.dsp.window.move({ workspace = "m-1" }))
-	hl.bind("E", hl.dsp.window.move({ workspace = "emptym", on_current_monitor = true }))
+	hl.bind("E", function()
+		hl.dispatch(hl.dsp.window.move({ workspace = "emptym", on_current_monitor = true }))
+		hl.dispatch(hl.dsp.submap("reset"))
+	end)
 
 	hl.bind("escape", function()
-		hl.notification.create({ text = "Escaped moving window", timeout = 2000 })
+		hl.notification.create({ text = "Escaped moving window", timeout = timeout.short })
 		hl.dispatch(hl.dsp.submap("reset"))
 	end)
 end)

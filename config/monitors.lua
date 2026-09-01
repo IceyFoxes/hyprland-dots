@@ -1,3 +1,5 @@
+local constants = require("config.constants")
+local mainMod, noctPrefix, timeout = constants.mainMod, constants.noctPrefix, constants.timeout
 ------------------
 ---- MONITORS ----
 ------------------
@@ -29,8 +31,6 @@ hl.monitor({
 ----------------------------
 ---- DISPLAY SHORTCUTS  ----
 ----------------------------
-local mainMod = require("config.constants").mainMod
-local noctPrefix = require("config.constants").noctPrefix
 local lid_closed = false
 local toggle_built_in = false
 local built_in_disabled = false
@@ -54,7 +54,7 @@ end, { locked = true })
 local function toggle_built_in_display()
 	local monitors = hl.get_monitors()
 	if #monitors == 1 and monitors[1].name == "eDP-1" then
-		hl.notification.create({ text = "No external monitor detected", timeout = 3000 })
+		hl.notification.create({ text = "No external monitor detected", timeout = timeout.medium })
 		return
 	end
 
@@ -68,20 +68,20 @@ end
 local function mirror_screen()
 	local monitors = hl.get_monitors()
 	if #monitors == 1 then
-		hl.notification.create({ text = "No external monitor detected", timeout = 3000 })
+		hl.notification.create({ text = "No external monitor detected", timeout = timeout.medium })
 		return
 	end
 
 	local window = hl.get_window("class:at.yrlf.wl_mirror")
 	if window then
-		hl.notification.create({ text = "Stopping screen mirroring", timeout = 3000 })
+		hl.notification.create({ text = "Stopping screen mirroring", timeout = timeout.medium })
 		hl.exec_cmd("pkill -9 wl-mirror")
 	else
 		for _, monitor in ipairs(monitors) do
 			if monitor.name ~= "eDP-1" then
 				hl.notification.create({
 					text = "Starting screen mirroring on " .. monitor.description,
-					timeout = 3000,
+					timeout = timeout.medium,
 				})
 				hl.exec_cmd("wl-mirror eDP-1", { monitor = monitor.name, fullscreen = true })
 			end
@@ -105,7 +105,7 @@ hl.bind(mainMod .. " + P", function()
 	end
 	hl.notification.create({
 		text = table.concat(parts, ", "),
-		timeout = 3000,
+		timeout = timeout.medium,
 	})
 	hl.dispatch(hl.dsp.submap("displayControl"))
 end)
@@ -115,7 +115,10 @@ hl.define_submap("displayControl", "reset", function()
 		hl.bind(b.key, b.fn)
 	end
 
-	hl.bind("catchall", function() hl.notification.create({ text = "Escaping display control", timeout = 3000 }) end)
+	hl.bind(
+		"catchall",
+		function() hl.notification.create({ text = "Escaping display control", timeout = timeout.medium }) end
+	)
 end)
 
 hl.on("monitor.removed", function()

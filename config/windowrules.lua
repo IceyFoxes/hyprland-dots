@@ -105,31 +105,19 @@ hl.window_rule({
 hl.window_rule({
 	match = { class = "Zoom", initial_title = "negative:Zoom Workplace|Zoom Workplace - .*|Meeting" },
 	float = true,
-	pin = true,
 })
 
-hl.window_rule({
-	match = { class = "Zoom", title = "Meeting" },
-	fullscreen_state = "1 3",
-	workspace = "emptynm",
-})
+-- hl.window_rule({
+-- 	match = { class = "Zoom", title = "Meeting" },
+-- 	fullscreen_state = "1 3",
+-- 	workspace = "emptynm",
+-- })
 
 hl.window_rule({
 	match = { class = "Zoom", title = "zoom_linux_float_video_window" },
 	float = true,
 	pin = true,
 	move = { "monitor_w * 0.8", "monitor_h * 0.2" },
-})
-
-hl.window_rule({
-	match = { class = "Zoom", title = "as_toolbar" },
-	pin = true,
-	move = { "monitor_w * 0.5 - (window_w * 0.5)", "20" },
-})
-
-hl.window_rule({
-	match = { class = "Zoom", title = "annotate_toolbar" },
-	opacity = 0.3,
 })
 
 -- onlyoffice
@@ -147,4 +135,9 @@ hl.window_rule({
 hl.window_rule({
 	match = { class = "xdg-desktop-portal-gtk" },
 	size = { "(monitor_w*0.5)", "(monitor_h*0.5)" },
+})
+
+hl.window_rule({
+	match = { class = "com.github.xournalpp.xournalpp" },
+	workspace = "current",
 })

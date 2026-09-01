@@ -17,6 +17,6 @@ hl.env("EDITOR", "nvim")
 -- hl.env("QT_IM_MODULE", "fcitx")
 
 -- dark theme
-hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
--- hl.env("QT_STYLE_OVERRIDE", "kvantum")
+hl.env("QT_QPA_PLATFORMTHEME", "xdgdesktopportal")
+hl.env("QT_STYLE_OVERRIDE", "kvantum")
 hl.env("QT_QPA_PLATFORM", "wayland")
