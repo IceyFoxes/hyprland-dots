@@ -16,6 +16,13 @@ hl.on("hyprland.start", function()
 	hl.exec_cmd("Telegram", { workspace = "special:magic" })
 	hl.exec_cmd("thunderbird", { workspace = "special:magic" })
 	hl.exec_cmd("brave-origin-nightly --app=https://web.whatsapp.com")
+	hl.exec_cmd(
+		"gdbus wait --session org.kde.StatusNotifierWatcher && QT_QPA_PLATFORM=xcb synology-drive start"
+	)
 
 	hl.exec_cmd("hyprpm reload")
+end)
+
+hl.on("hyprland.shutdown", function()
+	hl.exec_cmd("synology-drive stop")
 end)

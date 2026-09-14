@@ -2,49 +2,6 @@ local mainMod, layout, utils =
 	require("config.constants").mainMod, require("config.appearance").layout, require("config.utils")
 local has_neighbor, lt, gt = utils.has_neighbor, utils.lt, utils.gt
 
-local function setup_hyprexpo()
-	if hl.plugin.hyprexpo == nil then return end
-	local he = hl.plugin.hyprexpo
-
-	hl.config({
-		plugin = {
-			hyprexpo = {
-				columns = 3,
-				gaps_in = 0,
-				gaps_out = 0,
-				bg_col = "rgb(111111)",
-				workspace_method = "first 1",
-				gesture_distance = 200,
-				cancel_key = "escape",
-				show_cursor = 1,
-			},
-		},
-	})
-
-	hl.bind(mainMod .. "+ tab", function() he.expo("toggle") end)
-
-	hl.gesture({
-		fingers = 3,
-		direction = "up",
-		action = function() he.expo("open") end,
-	})
-
-	hl.gesture({
-		fingers = 3,
-		direction = "down",
-		action = function() he.expo("close") end,
-	})
-
-	hl.define_submap("hyprexpo", function()
-		hl.bind("h", function() he.kb_focus("left") end)
-		hl.bind("l", function() he.kb_focus("right") end)
-		hl.bind("k", function() he.kb_focus("up") end)
-		hl.bind("j", function() he.kb_focus("down") end)
-		hl.bind("return", function() he.kb_confirm() end)
-		hl.bind("escape", function() he.expo("cancel") end)
-	end)
-end
-
 local function setup_hyprscroll_overview()
 	if hl.plugin.scrolloverview == nil then return end
 	local so = hl.plugin.scrolloverview
@@ -286,15 +243,6 @@ local function setup_glass()
 		layers = { enabled = 1 },
 	})
 
-	-- Layer surfaces: each call whitelists the namespace and configures it
-	-- hg.layer("noctalia-bar-Vertical", { preset = "glass", mask_threshold = 0.3 })
-	hg.layer(
-		"noctalia-notification",
-		{ preset = "notification-glass", mask_threshold = 0.3, realtime = true, realtime_fps = 30 }
-	)
-	hg.layer("noctalia-attached-panel", { preset = "glass", mask_threshold = 0.3, realtime = true, realtime_fps = 30 })
-	hg.layer("noctalia-panel", { preset = "glass", mask_threshold = 0.3, realtime = true, realtime_fps = 30 })
-
 	-- Presets
 	hg.preset("clear", {
 		glass_opacity = 0.8,
@@ -304,15 +252,15 @@ local function setup_glass()
 	})
 
 	hg.preset("glass", {
-		chromatic_aberration = 0.2,
-		blur_strength = 0.5,
-		blur_iterations = 3,
+		chromatic_aberration = 0.4,
+		blur_strength = 0.7,
+		blur_iterations = 2,
 		lens_distortion = 0.3,
-		refraction_strength = 6.0,
+		refraction_strength = 5.0,
 		fresnel_strength = 0.4,
 		specular_strength = 0.8,
 		glass_opacity = 1.0,
-		edge_thickness = 0.05,
+		edge_thickness = 0.03,
 		tint_color = 0xffffff00,
 	})
 
@@ -335,9 +283,15 @@ local function setup_glass()
 		adaptive_dim = 1.5,
 		dark = { tint_color = 0x02142aa9 },
 	})
+
+	-- Layer surfaces: each call whitelists the namespace and configures it
+	hg.layer(
+		"noctalia-notification",
+		{ preset = "notification-glass", mask_threshold = 0.3, realtime = true, realtime_fps = 30 }
+	)
+	hg.layer("noctalia-panel", { preset = "glass", mask_threshold = 0.3, realtime = true, realtime_fps = 30 })
 end
 
-if layout == "dwindle" then setup_hyprexpo() end
 if layout == "scrolling" then setup_hyprscroll_overview() end
 setup_dynamic_cursors()
 setup_glass()

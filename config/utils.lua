@@ -11,7 +11,8 @@ local function window_y(win)
 end
 
 local function has_neighbor(dir, cmp)
-	local ws, win = hl.get_active_workspace(), hl.get_active_window()
+	local ws = hl.get_active_special_workspace() or hl.get_active_workspace()
+	local win = hl.get_active_window()
 	if not ws or not win then return false end
 
 	local extract, same

@@ -25,7 +25,6 @@ hl.monitor({
 	scale = "1.5",
 	icc = "/home/yihao/.local/share/icc/default.icm",
 	-- cm = "auto",
-	bitdepth = 10,
 })
 
 ----------------------------
@@ -41,6 +40,9 @@ hl.bind("switch:on:Lid Switch", function()
 	if #monitors == 1 and not built_in_disabled then
 		hl.dispatch(hl.dsp.exec_cmd(noctPrefix .. " session lock-and-suspend"))
 	else
+		-- Disabling eDP-1 emits monitor.removed. Use the same one-shot guard as
+		-- the manual toggle so it is not mistaken for an external unplug.
+		toggle_built_in = true
 		hl.monitor({ output = "eDP-1", disabled = true })
 	end
 end, { locked = true })

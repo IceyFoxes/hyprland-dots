@@ -60,7 +60,7 @@ hl.window_rule({
 })
 
 hl.window_rule({
-	match = { class = "org.mozilla.Thunderbird", initial_title = "negative:Mozilla Thunderbird|Write.*" },
+	match = { class = "org.mozilla.Thunderbird", initial_title = "negative:.*Mozilla Thunderbird|Write.*" },
 	float = true,
 	workspace = "current",
 })
@@ -128,16 +128,34 @@ hl.window_rule({
 
 -- libreoffice
 hl.window_rule({
+	match = { class = "libreoffice-impress" },
+	scrolling_width = 1,
+})
+
+hl.window_rule({
 	match = { class = "libreoffice-impress", title = "Console:.*" },
 	suppress_event = "activate activatefocus",
 })
 
 hl.window_rule({
-	match = { class = "xdg-desktop-portal-gtk" },
-	size = { "(monitor_w*0.5)", "(monitor_h*0.5)" },
+	match = { class = "libreoffice-impress", title = "Presenting: .*" },
+	scrolling_width = 0.75,
+	fullscreen_state = "0 3",
 })
 
 hl.window_rule({
 	match = { class = "com.github.xournalpp.xournalpp" },
 	workspace = "current",
 })
+--
+-- hl.on("window.active", function()
+-- 	local prev_win = hl.get_last_window()
+--
+-- 	if prev_win and prev_win.fullscreen >= 2 and prev_win.fullscreen_client == 0 then
+-- 		hl.dispatch(hl.dsp.window.fullscreen({
+-- 			window = prev_win,
+-- 			action = "unset",
+-- 			mode = "fullscreen",
+-- 		}))
+-- 	end
+-- end)

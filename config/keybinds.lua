@@ -7,8 +7,26 @@ local has_neighbor, lt, gt, swap_workspaces, organize_workspace =
 	utils.has_neighbor, utils.lt, utils.gt, utils.swap_workspaces, utils.organize_workspaces
 
 local constants = require("config.constants")
-local layout = require("config.appearance").layout
 local mainMod, noctPrefix, timeout = constants.mainMod, constants.noctPrefix, constants.timeout
+
+local function get_active_tiled_workspace()
+	return hl.get_active_special_workspace() or hl.get_active_workspace()
+end
+
+-- Select an action at keypress time so each workspace can use its own layout.
+local function layout_bind(actions)
+	return function()
+		local workspace = get_active_tiled_workspace()
+		if not workspace then return end
+
+		local action = actions[workspace.tiled_layout]
+		if type(action) == "function" then
+			action()
+		elseif action then
+			hl.dispatch(action)
+		end
+	end
+end
 
 -- open apps
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(constants.terminal))
@@ -16,6 +34,7 @@ hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(constants.browser))
 hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd(constants.browser .. " --incognito"))
 hl.bind(mainMod .. " + W", hl.dsp.window.close())
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.window.signal({ signal = 9 }))
+hl.bind(mainMod .. " + ALT + W", hl.dsp.window.signal({ signal = 3 }))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(constants.fileManager))
 
 -- noctalia commands
@@ -38,11 +57,22 @@ hl.bind(mainMod .. " + V", function()
 	local monitor = hl.get_active_monitor()
 	if monitor then hl.dispatch(hl.dsp.window.resize({ x = monitor.width / 2, y = monitor.height / 2 })) end
 end)
-if layout == "dwindle" then
-	hl.bind(mainMod .. " + T", hl.dsp.layout("togglesplit")) -- dwindle only
-elseif layout == "scrolling" then
-	hl.bind(mainMod .. " + T", hl.dsp.layout("consume_or_expel prev"))
-end
+hl.bind(
+	mainMod .. " + T",
+	layout_bind({
+		dwindle = hl.dsp.layout("togglesplit"),
+		scrolling = hl.dsp.layout("consume_or_expel prev"),
+	})
+)
+hl.bind(mainMod .. " + CTRL + T", function()
+	local workspace = get_active_tiled_workspace()
+	if not workspace then return end
+
+	local next_layout = workspace.tiled_layout == "scrolling" and "dwindle" or "scrolling"
+	local selector = workspace.special and tostring(workspace.name) or tostring(workspace.id)
+	hl.workspace_rule({ workspace = selector, layout = next_layout })
+	hl.notification.create({ text = "Layout: " .. next_layout, timeout = timeout.short })
+end)
 hl.bind(mainMod .. " + F", function()
 	local opts = { action = "toggle", internal = 2, client = 2 }
 	-- prevent helium from going fullscreen and hiding sidebar
@@ -57,121 +87,186 @@ hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind("ALT + mouse:272", hl.dsp.window.resize(), { mouse = true })
 
 -- Move focus with mainMod + arrow keys
-if layout == "dwindle" then
-	hl.bind(mainMod .. " + H", hl.dsp.focus({ direction = "left" }))
-	hl.bind(mainMod .. " + L", hl.dsp.focus({ direction = "right" }))
-	hl.bind(mainMod .. " + K", hl.dsp.focus({ direction = "up" }))
-	hl.bind(mainMod .. " + J", hl.dsp.focus({ direction = "down" }))
-elseif layout == "scrolling" then
-	hl.bind(mainMod .. " + H", function()
-		if has_neighbor("x", lt) then
-			hl.dispatch(hl.dsp.layout("focus l"))
-		else
-			hl.dispatch(hl.dsp.focus({ direction = "left" }))
-		end
-	end)
-	hl.bind(mainMod .. " + L", function()
-		if has_neighbor("x", gt) then
-			hl.dispatch(hl.dsp.layout("focus r"))
-		else
-			hl.dispatch(hl.dsp.focus({ direction = "right" }))
-		end
-	end)
-	hl.bind(mainMod .. " + K", function()
-		if has_neighbor("y", lt) then
-			hl.dispatch(hl.dsp.layout("focus u"))
-		else
-			hl.dispatch(hl.dsp.focus({ workspace = "r-1" }))
-		end
-	end)
-	hl.bind(mainMod .. " + J", function()
-		if has_neighbor("y", gt) then
-			hl.dispatch(hl.dsp.layout("focus d"))
-		else
-			hl.dispatch(hl.dsp.focus({ workspace = "r+1" }))
-		end
-	end)
-	hl.bind(mainMod .. " + mouse_down", hl.dsp.layout("focus l"), { mouse = true, non_consuming = false })
-	hl.bind(mainMod .. " + mouse_up", hl.dsp.layout("focus r"), { mouse = true, non_consuming = false })
-end
+hl.bind(
+	mainMod .. " + H",
+	layout_bind({
+		dwindle = hl.dsp.focus({ direction = "left" }),
+		scrolling = function()
+			if has_neighbor("x", lt) then
+				hl.dispatch(hl.dsp.layout("focus l"))
+			else
+				hl.dispatch(hl.dsp.focus({ direction = "left" }))
+			end
+		end,
+	})
+)
+hl.bind(
+	mainMod .. " + L",
+	layout_bind({
+		dwindle = hl.dsp.focus({ direction = "right" }),
+		scrolling = function()
+			if has_neighbor("x", gt) then
+				hl.dispatch(hl.dsp.layout("focus r"))
+			else
+				hl.dispatch(hl.dsp.focus({ direction = "right" }))
+			end
+		end,
+	})
+)
+hl.bind(
+	mainMod .. " + K",
+	layout_bind({
+		dwindle = function()
+			if has_neighbor("y", lt) then
+				hl.dispatch(hl.dsp.focus({ direction = "up" }))
+			else
+				hl.dispatch(hl.dsp.focus({ workspace = "r-1" }))
+			end
+		end,
+		scrolling = function()
+			if has_neighbor("y", lt) then
+				hl.dispatch(hl.dsp.layout("focus u"))
+			else
+				hl.dispatch(hl.dsp.focus({ workspace = "r-1" }))
+			end
+		end,
+	})
+)
+hl.bind(
+	mainMod .. " + J",
+	layout_bind({
+		dwindle = function()
+			if has_neighbor("y", gt) then
+				hl.dispatch(hl.dsp.focus({ direction = "down" }))
+			else
+				hl.dispatch(hl.dsp.focus({ workspace = "r+1" }))
+			end
+		end,
+		scrolling = function()
+			if has_neighbor("y", gt) then
+				hl.dispatch(hl.dsp.layout("focus d"))
+			else
+				hl.dispatch(hl.dsp.focus({ workspace = "r+1" }))
+			end
+		end,
+	})
+)
+hl.bind(
+	mainMod .. " + mouse_up",
+	layout_bind({ scrolling = hl.dsp.layout("focus l") }),
+	{ mouse = true, non_consuming = false }
+)
+hl.bind(
+	mainMod .. " + mouse_down",
+	layout_bind({ scrolling = hl.dsp.layout("focus r") }),
+	{ mouse = true, non_consuming = false }
+)
 
 -- Move the windows
-if layout == "dwindle" then
-	hl.bind(mainMod .. " + SHIFT + H", hl.dsp.window.move({ direction = "left" }))
-	hl.bind(mainMod .. " + SHIFT + L", hl.dsp.window.move({ direction = "right" }))
-	hl.bind(mainMod .. " + SHIFT + K", hl.dsp.window.move({ direction = "up" }))
-	hl.bind(mainMod .. " + SHIFT + J", hl.dsp.window.move({ direction = "down" }))
-	hl.bind(mainMod .. " + N", hl.dsp.focus({ workspace = "m+1" }))
-	hl.bind(mainMod .. " + CTRL + N", hl.dsp.focus({ workspace = "m-1" }))
-	hl.bind(mainMod .. " + SHIFT + N", hl.dsp.focus({ workspace = "prev" }))
-	hl.bind(mainMod .. " + ALT + N", hl.dsp.focus({ workspace = "emptym", on_current_monitor = true }))
-elseif layout == "scrolling" then
-	hl.bind(mainMod .. " + SHIFT + H", function()
-		if has_neighbor("y", lt) or has_neighbor("y", gt) then
-			hl.dispatch(hl.dsp.window.move({ direction = "left" }))
-		else
-			hl.dispatch(hl.dsp.layout("swapcol l"))
-		end
-	end)
-	hl.bind(mainMod .. " + SHIFT + L", function()
-		if has_neighbor("y", lt) or has_neighbor("y", gt) then
-			hl.dispatch(hl.dsp.window.move({ direction = "right" }))
-		else
-			hl.dispatch(hl.dsp.layout("swapcol r"))
-		end
-	end)
-	hl.bind(mainMod .. " + SHIFT + K", function()
-		if has_neighbor("y", lt) then
-			hl.dispatch(hl.dsp.window.move({ direction = "up" }))
-		else
-			hl.dispatch(hl.dsp.window.move({ workspace = "r-1" }))
-		end
-	end)
-	hl.bind(mainMod .. " + SHIFT + J", function()
-		if has_neighbor("y", gt) then
-			hl.dispatch(hl.dsp.window.move({ direction = "down" }))
-		else
-			hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
-		end
-	end)
-	local function move_workspace_id(direction)
-		local ws = hl.get_active_workspace()
-		if not ws then return end
+hl.bind(
+	mainMod .. " + SHIFT + H",
+	layout_bind({
+		dwindle = hl.dsp.window.move({ direction = "left" }),
+		scrolling = function()
+			if has_neighbor("y", lt) or has_neighbor("y", gt) then
+				hl.dispatch(hl.dsp.window.move({ direction = "left" }))
+			else
+				hl.dispatch(hl.dsp.layout("swapcol l"))
+			end
+		end,
+	})
+)
+hl.bind(
+	mainMod .. " + SHIFT + L",
+	layout_bind({
+		dwindle = hl.dsp.window.move({ direction = "right" }),
+		scrolling = function()
+			if has_neighbor("y", lt) or has_neighbor("y", gt) then
+				hl.dispatch(hl.dsp.window.move({ direction = "right" }))
+			else
+				hl.dispatch(hl.dsp.layout("swapcol r"))
+			end
+		end,
+	})
+)
+hl.bind(
+	mainMod .. " + SHIFT + K",
+	layout_bind({
+		dwindle = hl.dsp.window.move({ direction = "up" }),
+		scrolling = function()
+			if has_neighbor("y", lt) then
+				hl.dispatch(hl.dsp.window.move({ direction = "up" }))
+			else
+				hl.dispatch(hl.dsp.window.move({ workspace = "r-1" }))
+			end
+		end,
+	})
+)
+hl.bind(
+	mainMod .. " + SHIFT + J",
+	layout_bind({
+		dwindle = hl.dsp.window.move({ direction = "down" }),
+		scrolling = function()
+			if has_neighbor("y", gt) then
+				hl.dispatch(hl.dsp.window.move({ direction = "down" }))
+			else
+				hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
+			end
+		end,
+	})
+)
 
-		local curr_id = ws.id
-		local target_id = curr_id + direction
+local function move_workspace_id(direction)
+	local ws = hl.get_active_workspace()
+	if not ws then return end
+
+	local curr_id = ws.id
+	local target_id = curr_id + direction
+	if target_id < 1 then return end
+
+	local target_ws = hl.get_workspace(target_id)
+	while target_ws and target_ws.monitor ~= ws.monitor do
+		target_id = target_id + direction
 		if target_id < 1 then return end
-
-		local target_ws = hl.get_workspace(target_id)
-		while target_ws and target_ws.monitor ~= ws.monitor do
-			target_id = target_id + direction
-			if target_id < 1 then return end
-			target_ws = hl.get_workspace(target_id)
-		end
-
-		if not target_ws then
-			hl.dispatch(hl.dsp.workspace.change_id({ workspace = curr_id, id = target_id }))
-		else
-			swap_workspaces(curr_id, target_id)
-		end
+		target_ws = hl.get_workspace(target_id)
 	end
 
-	hl.bind(mainMod .. " + CTRL + J", function() move_workspace_id(1) end)
-	hl.bind(mainMod .. " + CTRL + K", function() move_workspace_id(-1) end)
+	if not target_ws then
+		hl.dispatch(hl.dsp.workspace.change_id({ workspace = curr_id, id = target_id }))
+	else
+		swap_workspaces(curr_id, target_id)
+	end
 end
 
+hl.bind(mainMod .. " + N", layout_bind({ dwindle = hl.dsp.focus({ workspace = "m+1" }) }))
+hl.bind(mainMod .. " + CTRL + N", layout_bind({ dwindle = hl.dsp.focus({ workspace = "m-1" }) }))
+hl.bind(mainMod .. " + SHIFT + N", layout_bind({ dwindle = hl.dsp.focus({ workspace = "prev" }) }))
+hl.bind(
+	mainMod .. " + ALT + N",
+	layout_bind({ dwindle = hl.dsp.focus({ workspace = "emptym", on_current_monitor = true }) })
+)
+hl.bind(mainMod .. " + CTRL + J", layout_bind({ scrolling = function() move_workspace_id(1) end }))
+hl.bind(mainMod .. " + CTRL + K", layout_bind({ scrolling = function() move_workspace_id(-1) end }))
+
 -- Resize windows
-if layout == "dwindle" then
-	hl.bind(mainMod .. " + ALT + H", hl.dsp.window.resize({ x = -50, y = 0, relative = true }), { repeating = true })
-	hl.bind(mainMod .. " + ALT + L", hl.dsp.window.resize({ x = 50, y = 0, relative = true }), { repeating = true })
-	hl.bind(mainMod .. " + ALT + J", hl.dsp.window.resize({ x = 0, y = 50, relative = true }), { repeating = true })
-	hl.bind(mainMod .. " + ALT + K", hl.dsp.window.resize({ x = 0, y = -50, relative = true }), { repeating = true })
-else
-	hl.bind(mainMod .. " + ALT + H", hl.dsp.layout("colresize -0.1"), { repeating = true })
-	hl.bind(mainMod .. " + ALT + L", hl.dsp.layout("colresize +0.1"), { repeating = true })
-	hl.bind(mainMod .. " + ALT + J", hl.dsp.window.resize({ x = 0, y = 50, relative = true }), { repeating = true })
-	hl.bind(mainMod .. " + ALT + K", hl.dsp.window.resize({ x = 0, y = -50, relative = true }), { repeating = true })
-end
+hl.bind(
+	mainMod .. " + ALT + H",
+	layout_bind({
+		dwindle = hl.dsp.window.resize({ x = -50, y = 0, relative = true }),
+		scrolling = hl.dsp.layout("colresize -0.1"),
+	}),
+	{ repeating = true }
+)
+hl.bind(
+	mainMod .. " + ALT + L",
+	layout_bind({
+		dwindle = hl.dsp.window.resize({ x = 50, y = 0, relative = true }),
+		scrolling = hl.dsp.layout("colresize +0.1"),
+	}),
+	{ repeating = true }
+)
+hl.bind(mainMod .. " + ALT + J", hl.dsp.window.resize({ x = 0, y = 50, relative = true }), { repeating = true })
+hl.bind(mainMod .. " + ALT + K", hl.dsp.window.resize({ x = 0, y = -50, relative = true }), { repeating = true })
 
 -- Switch workspaces with mainMod + [0-9]
 -- Move active window to a workspace with mainMod + SHIFT + [0-9]
@@ -214,6 +309,8 @@ hl.define_submap("moveToWorkspace", function()
 
 	hl.bind("N", hl.dsp.window.move({ workspace = "m+1" }))
 	hl.bind("P", hl.dsp.window.move({ workspace = "m-1" }))
+	hl.bind("SHIFT + N", hl.dsp.window.move({ workspace = "e+1" }))
+	hl.bind("SHIFT + P", hl.dsp.window.move({ workspace = "e-1" }))
 	hl.bind("E", function()
 		hl.dispatch(hl.dsp.window.move({ workspace = "emptym", on_current_monitor = true }))
 		hl.dispatch(hl.dsp.submap("reset"))
