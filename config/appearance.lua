@@ -104,8 +104,7 @@ hl.animation({ leaf = "fadeLayersIn", enabled = true, speed = 1.79, bezier = "al
 hl.animation({ leaf = "fadeLayersOut", enabled = true, speed = 1.39, bezier = "almostLinear" })
 hl.animation({ leaf = "workspaces", enabled = true, speed = 0.44, spring = "easy", style = "slide top" })
 
-local workspace_anim_style = "slide"
-if active_layout ~= "dwindle" then workspace_anim_style = "slidevert" end
+local workspace_anim_style = "slidevert"
 hl.animation({ leaf = "workspacesIn", enabled = true, speed = 0.44, spring = "easy", style = workspace_anim_style })
 hl.animation({ leaf = "workspacesOut", enabled = true, speed = 0.44, spring = "easy", style = workspace_anim_style })
 hl.animation({ leaf = "zoomFactor", enabled = true, speed = 3, bezier = "quick" })

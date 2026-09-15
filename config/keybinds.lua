@@ -3,30 +3,17 @@
 ---------------------
 
 local utils = require("config.utils")
-local has_neighbor, lt, gt, swap_workspaces, organize_workspace =
-	utils.has_neighbor, utils.lt, utils.gt, utils.swap_workspaces, utils.organize_workspaces
+local has_neighbor, lt, gt, swap_workspaces, organize_workspace, layout_binding, toggle_tiled_layout =
+	utils.has_neighbor,
+	utils.lt,
+	utils.gt,
+	utils.swap_workspaces,
+	utils.organize_workspaces,
+	utils.layout_binding,
+	utils.toggle_tiled_layout
 
 local constants = require("config.constants")
 local mainMod, noctPrefix, timeout = constants.mainMod, constants.noctPrefix, constants.timeout
-
-local function get_active_tiled_workspace()
-	return hl.get_active_special_workspace() or hl.get_active_workspace()
-end
-
--- Select an action at keypress time so each workspace can use its own layout.
-local function layout_bind(actions)
-	return function()
-		local workspace = get_active_tiled_workspace()
-		if not workspace then return end
-
-		local action = actions[workspace.tiled_layout]
-		if type(action) == "function" then
-			action()
-		elseif action then
-			hl.dispatch(action)
-		end
-	end
-end
 
 -- open apps
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(constants.terminal))
@@ -59,20 +46,12 @@ hl.bind(mainMod .. " + V", function()
 end)
 hl.bind(
 	mainMod .. " + T",
-	layout_bind({
+	layout_binding({
 		dwindle = hl.dsp.layout("togglesplit"),
 		scrolling = hl.dsp.layout("consume_or_expel prev"),
 	})
 )
-hl.bind(mainMod .. " + CTRL + T", function()
-	local workspace = get_active_tiled_workspace()
-	if not workspace then return end
-
-	local next_layout = workspace.tiled_layout == "scrolling" and "dwindle" or "scrolling"
-	local selector = workspace.special and tostring(workspace.name) or tostring(workspace.id)
-	hl.workspace_rule({ workspace = selector, layout = next_layout })
-	hl.notification.create({ text = "Layout: " .. next_layout, timeout = timeout.short })
-end)
+hl.bind(mainMod .. " + CTRL + T", toggle_tiled_layout)
 hl.bind(mainMod .. " + F", function()
 	local opts = { action = "toggle", internal = 2, client = 2 }
 	-- prevent helium from going fullscreen and hiding sidebar
@@ -89,7 +68,7 @@ hl.bind("ALT + mouse:272", hl.dsp.window.resize(), { mouse = true })
 -- Move focus with mainMod + arrow keys
 hl.bind(
 	mainMod .. " + H",
-	layout_bind({
+	layout_binding({
 		dwindle = hl.dsp.focus({ direction = "left" }),
 		scrolling = function()
 			if has_neighbor("x", lt) then
@@ -102,7 +81,7 @@ hl.bind(
 )
 hl.bind(
 	mainMod .. " + L",
-	layout_bind({
+	layout_binding({
 		dwindle = hl.dsp.focus({ direction = "right" }),
 		scrolling = function()
 			if has_neighbor("x", gt) then
@@ -115,7 +94,7 @@ hl.bind(
 )
 hl.bind(
 	mainMod .. " + K",
-	layout_bind({
+	layout_binding({
 		dwindle = function()
 			if has_neighbor("y", lt) then
 				hl.dispatch(hl.dsp.focus({ direction = "up" }))
@@ -134,7 +113,7 @@ hl.bind(
 )
 hl.bind(
 	mainMod .. " + J",
-	layout_bind({
+	layout_binding({
 		dwindle = function()
 			if has_neighbor("y", gt) then
 				hl.dispatch(hl.dsp.focus({ direction = "down" }))
@@ -153,19 +132,19 @@ hl.bind(
 )
 hl.bind(
 	mainMod .. " + mouse_up",
-	layout_bind({ scrolling = hl.dsp.layout("focus l") }),
+	layout_binding({ scrolling = hl.dsp.layout("focus l") }),
 	{ mouse = true, non_consuming = false }
 )
 hl.bind(
 	mainMod .. " + mouse_down",
-	layout_bind({ scrolling = hl.dsp.layout("focus r") }),
+	layout_binding({ scrolling = hl.dsp.layout("focus r") }),
 	{ mouse = true, non_consuming = false }
 )
 
 -- Move the windows
 hl.bind(
 	mainMod .. " + SHIFT + H",
-	layout_bind({
+	layout_binding({
 		dwindle = hl.dsp.window.move({ direction = "left" }),
 		scrolling = function()
 			if has_neighbor("y", lt) or has_neighbor("y", gt) then
@@ -178,7 +157,7 @@ hl.bind(
 )
 hl.bind(
 	mainMod .. " + SHIFT + L",
-	layout_bind({
+	layout_binding({
 		dwindle = hl.dsp.window.move({ direction = "right" }),
 		scrolling = function()
 			if has_neighbor("y", lt) or has_neighbor("y", gt) then
@@ -191,8 +170,14 @@ hl.bind(
 )
 hl.bind(
 	mainMod .. " + SHIFT + K",
-	layout_bind({
-		dwindle = hl.dsp.window.move({ direction = "up" }),
+	layout_binding({
+		dwindle = function()
+			if has_neighbor("y", lt) then
+				hl.dispatch(hl.dsp.window.move({ direction = "up" }))
+			else
+				hl.dispatch(hl.dsp.window.move({ workspace = "r-1" }))
+			end
+		end,
 		scrolling = function()
 			if has_neighbor("y", lt) then
 				hl.dispatch(hl.dsp.window.move({ direction = "up" }))
@@ -204,8 +189,14 @@ hl.bind(
 )
 hl.bind(
 	mainMod .. " + SHIFT + J",
-	layout_bind({
-		dwindle = hl.dsp.window.move({ direction = "down" }),
+	layout_binding({
+		dwindle = function()
+			if has_neighbor("y", gt) then
+				hl.dispatch(hl.dsp.window.move({ direction = "down" }))
+			else
+				hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
+			end
+		end,
 		scrolling = function()
 			if has_neighbor("y", gt) then
 				hl.dispatch(hl.dsp.window.move({ direction = "down" }))
@@ -238,20 +229,19 @@ local function move_workspace_id(direction)
 	end
 end
 
-hl.bind(mainMod .. " + N", layout_bind({ dwindle = hl.dsp.focus({ workspace = "m+1" }) }))
-hl.bind(mainMod .. " + CTRL + N", layout_bind({ dwindle = hl.dsp.focus({ workspace = "m-1" }) }))
-hl.bind(mainMod .. " + SHIFT + N", layout_bind({ dwindle = hl.dsp.focus({ workspace = "prev" }) }))
 hl.bind(
-	mainMod .. " + ALT + N",
-	layout_bind({ dwindle = hl.dsp.focus({ workspace = "emptym", on_current_monitor = true }) })
+	mainMod .. " + ALT + E",
+	layout_binding({
+		common = hl.dsp.focus({ workspace = "emptym", on_current_monitor = true }),
+	})
 )
-hl.bind(mainMod .. " + CTRL + J", layout_bind({ scrolling = function() move_workspace_id(1) end }))
-hl.bind(mainMod .. " + CTRL + K", layout_bind({ scrolling = function() move_workspace_id(-1) end }))
+hl.bind(mainMod .. " + CTRL + J", layout_binding({ common = function() move_workspace_id(1) end }))
+hl.bind(mainMod .. " + CTRL + K", layout_binding({ common = function() move_workspace_id(-1) end }))
 
 -- Resize windows
 hl.bind(
 	mainMod .. " + ALT + H",
-	layout_bind({
+	layout_binding({
 		dwindle = hl.dsp.window.resize({ x = -50, y = 0, relative = true }),
 		scrolling = hl.dsp.layout("colresize -0.1"),
 	}),
@@ -259,7 +249,7 @@ hl.bind(
 )
 hl.bind(
 	mainMod .. " + ALT + L",
-	layout_bind({
+	layout_binding({
 		dwindle = hl.dsp.window.resize({ x = 50, y = 0, relative = true }),
 		scrolling = hl.dsp.layout("colresize +0.1"),
 	}),

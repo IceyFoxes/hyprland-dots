@@ -1,6 +1,6 @@
-local mainMod, layout, utils =
-	require("config.constants").mainMod, require("config.appearance").layout, require("config.utils")
-local has_neighbor, lt, gt = utils.has_neighbor, utils.lt, utils.gt
+local mainMod, utils = require("config.constants").mainMod, require("config.utils")
+local has_neighbor, lt, gt, layout_binding, toggle_tiled_layout =
+	utils.has_neighbor, utils.lt, utils.gt, utils.layout_binding, utils.toggle_tiled_layout
 
 local function setup_hyprscroll_overview()
 	if hl.plugin.scrolloverview == nil then return end
@@ -49,36 +49,79 @@ local function setup_hyprscroll_overview()
 		hl.bind("j", so.navigate("down"))
 
 		-- move the windows
-		hl.bind(mainMod .. " + H", function()
-			if has_neighbor("y", lt) or has_neighbor("y", gt) then
-				hl.dispatch(hl.dsp.window.move({ direction = "left" }))
-			else
-				hl.dispatch(hl.dsp.layout("swapcol l"))
-			end
-		end)
-		hl.bind(mainMod .. " + L", function()
-			if has_neighbor("y", lt) or has_neighbor("y", gt) then
-				hl.dispatch(hl.dsp.window.move({ direction = "right" }))
-			else
-				hl.dispatch(hl.dsp.layout("swapcol r"))
-			end
-		end)
-		hl.bind(mainMod .. " + K", function()
-			if has_neighbor("y", lt) then
-				hl.dispatch(hl.dsp.window.move({ direction = "up" }))
-			else
-				hl.dispatch(hl.dsp.window.move({ workspace = "r-1" }))
-			end
-		end)
-		hl.bind(mainMod .. " + J", function()
-			if has_neighbor("y", gt) then
-				hl.dispatch(hl.dsp.window.move({ direction = "down" }))
-			else
-				hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
-			end
-		end)
-		hl.bind("T", hl.dsp.layout("consume_or_expel prev"), { ignore_mods = true })
-		hl.bind("D", so.window("close"))
+		hl.bind(
+			mainMod .. " + H",
+			layout_binding({
+				dwindle = hl.dsp.window.move({ direction = "left" }),
+				scrolling = function()
+					if has_neighbor("y", lt) or has_neighbor("y", gt) then
+						hl.dispatch(hl.dsp.window.move({ direction = "left" }))
+					else
+						hl.dispatch(hl.dsp.layout("swapcol l"))
+					end
+				end,
+			})
+		)
+		hl.bind(
+			mainMod .. " + L",
+			layout_binding({
+				dwindle = hl.dsp.window.move({ direction = "right" }),
+				scrolling = function()
+					if has_neighbor("y", lt) or has_neighbor("y", gt) then
+						hl.dispatch(hl.dsp.window.move({ direction = "right" }))
+					else
+						hl.dispatch(hl.dsp.layout("swapcol r"))
+					end
+				end,
+			})
+		)
+		hl.bind(
+			mainMod .. " + K",
+			layout_binding({
+				dwindle = function()
+					if has_neighbor("y", lt) then
+						hl.dispatch(hl.dsp.window.move({ direction = "up" }))
+					else
+						hl.dispatch(hl.dsp.window.move({ workspace = "r-1" }))
+					end
+				end,
+				scrolling = function()
+					if has_neighbor("y", lt) then
+						hl.dispatch(hl.dsp.window.move({ direction = "up" }))
+					else
+						hl.dispatch(hl.dsp.window.move({ workspace = "r-1" }))
+					end
+				end,
+			})
+		)
+		hl.bind(
+			mainMod .. " + J",
+			layout_binding({
+				dwindle = function()
+					if has_neighbor("y", gt) then
+						hl.dispatch(hl.dsp.window.move({ direction = "down" }))
+					else
+						hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
+					end
+				end,
+				scrolling = function()
+					if has_neighbor("y", gt) then
+						hl.dispatch(hl.dsp.window.move({ direction = "down" }))
+					else
+						hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
+					end
+				end,
+			})
+		)
+		hl.bind(
+			"T",
+			layout_binding({
+				dwindle = hl.dsp.layout("togglesplit"),
+				scrolling = hl.dsp.layout("consume_or_expel prev"),
+			})
+		)
+		hl.bind("SHIFT + T", toggle_tiled_layout)
+		hl.bind("d", hl.dsp.window.close())
 
 		hl.bind("return", so.overview("off"))
 		hl.bind("escape", so.overview("off"))
@@ -292,6 +335,6 @@ local function setup_glass()
 	hg.layer("noctalia-panel", { preset = "glass", mask_threshold = 0.3, realtime = true, realtime_fps = 30 })
 end
 
-if layout == "scrolling" then setup_hyprscroll_overview() end
+setup_hyprscroll_overview()
 setup_dynamic_cursors()
 setup_glass()

@@ -16,6 +16,11 @@
 -- })
 -- suppressMaximizeRule:set_enabled(false)
 
+hl.workspace_rule({
+	workspace = "s[true]",
+	layout = "dwindle",
+})
+
 hl.window_rule({
 	-- Fix some dragging issues with XWayland
 	name = "fix-xwayland-drags",

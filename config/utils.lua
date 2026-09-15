@@ -1,5 +1,41 @@
 local lt = function(a, b) return a < b end
 local gt = function(a, b) return a > b end
+local timeout = require("config.constants").timeout
+
+local function get_active_tiled_workspace() return hl.get_active_special_workspace() or hl.get_active_workspace() end
+
+-- Select an action at keypress time so each workspace can use its own layout.
+local function layout_binding(actions)
+	return function()
+		local workspace = get_active_tiled_workspace()
+		if not workspace then
+			hl.dispatch(hl.dsp.pass())
+			return
+		end
+
+		local action = actions[workspace.tiled_layout] or actions.common
+		if type(action) == "function" then
+			action()
+		elseif action then
+			hl.dispatch(action)
+		else
+			hl.notification.create({
+				text = "No action defined for layout: " .. workspace.tiled_layout,
+				timeout = timeout.short,
+			})
+		end
+	end
+end
+
+local function toggle_tiled_layout()
+	local workspace = get_active_tiled_workspace()
+	if not workspace then return end
+
+	local next_layout = workspace.tiled_layout == "scrolling" and "dwindle" or "scrolling"
+	local selector = workspace.special and tostring(workspace.name) or tostring(workspace.id)
+	hl.workspace_rule({ workspace = selector, layout = next_layout })
+	hl.notification.create({ text = "Layout: " .. next_layout, timeout = timeout.short })
+end
 
 local function window_x(win)
 	local at = win.at
@@ -10,27 +46,32 @@ local function window_y(win)
 	return type(at) == "table" and (at.y or at[2]) or 0
 end
 
-local function has_neighbor(dir, cmp)
-	local ws = hl.get_active_special_workspace() or hl.get_active_workspace()
+local function window_size(win, axis)
+	local size = win.size
+	return type(size) == "table" and (size[axis] or size[axis == "x" and 1 or 2]) or size
+end
+
+local function has_neighbor(axis, cmp)
+	local workspace = get_active_tiled_workspace()
 	local win = hl.get_active_window()
-	if not ws or not win then return false end
+	if not workspace or not win or win.fullscreen > 0 then return false end
 
-	local extract, same
-	if dir == "x" then
-		extract = window_x
-		same = window_y
-	elseif dir == "y" then
-		extract = window_y
-		same = window_x
-	end
+	local along = axis == "x" and window_x or window_y
+	local across = axis == "x" and window_y or window_x
+	local cross_axis = axis == "x" and "y" or "x"
 
-	local pos = extract(win)
-	local same_val = same and same(win)
-	for _, w in ipairs(ws:get_windows()) do
-		if w.address ~= win.address and cmp(extract(w), pos) then
-			if not same or same(w) == same_val then return true end
+	local position = along(win)
+	local cross_start = across(win)
+	local cross_end = cross_start + window_size(win, cross_axis)
+	for _, candidate in ipairs(workspace:get_windows()) do
+		if candidate.address ~= win.address and cmp(along(candidate), position) then
+			local candidate_start = across(candidate)
+			local candidate_end = candidate_start + window_size(candidate, cross_axis)
+			-- A neighbor must overlap perpendicular to the movement direction.
+			if candidate_start < cross_end and candidate_end > cross_start then return true end
 		end
 	end
+	return false
 end
 
 local function swap_workspaces(curr_id, target_id)
@@ -91,6 +132,8 @@ return {
 	window_y = window_y,
 	lt = lt,
 	gt = gt,
+	layout_binding = layout_binding,
+	toggle_tiled_layout = toggle_tiled_layout,
 	has_neighbor = has_neighbor,
 	swap_workspaces = swap_workspaces,
 	organize_workspaces = organize_workspaces,
