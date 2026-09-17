@@ -1,6 +1,6 @@
 local M = {}
 
-local openedByAltTab = false
+local opened_by_alt_tab = false
 
 local function object_value(value, key)
 	if value == nil then return nil end
@@ -11,32 +11,32 @@ local function object_value(value, key)
 end
 
 local function selection_state()
-	local workspaceId = object_value(hl.get_active_workspace(), "id")
-	local windowAddress = object_value(hl.get_active_window(), "address")
-	return tostring(workspaceId) .. ":" .. tostring(windowAddress)
+	local workspace_id = object_value(hl.get_active_workspace(), "id")
+	local window_address = object_value(hl.get_active_window(), "address")
+	return tostring(workspace_id) .. ":" .. tostring(window_address)
 end
 
 local function navigate_to_first_column()
-	local previousState
-	local maxSteps = #(hl.get_windows() or {}) + #(hl.get_workspaces() or {}) + 1
+	local previous_state
+	local max_steps = #(hl.get_windows() or {}) + #(hl.get_workspaces() or {}) + 1
 
-	for _ = 1, maxSteps do
-		local currentState = selection_state()
-		if currentState == previousState then return end
+	for _ = 1, max_steps do
+		local current_state = selection_state()
+		if current_state == previous_state then return end
 
-		previousState = currentState
+		previous_state = current_state
 		hl.plugin.scrolloverview.navigate("left")
 	end
 end
 
 local function navigate_column(dir)
-	local previousState = selection_state()
+	local previous_state = selection_state()
 	hl.plugin.scrolloverview.navigate(dir)
 
-	if selection_state() == previousState then navigate_to_first_column() end
+	if selection_state() == previous_state then navigate_to_first_column() end
 end
 
-function M.next()
+local function open_overview(direction)
 	hl.config({
 		plugin = {
 			scrolloverview = {
@@ -46,28 +46,18 @@ function M.next()
 		},
 	})
 	hl.plugin.scrolloverview.overview("on")
-	openedByAltTab = true
-	navigate_column("right")
+	opened_by_alt_tab = true
+	navigate_column(direction)
 end
 
-function M.prev()
-	hl.config({
-		plugin = {
-			scrolloverview = {
-				layout = "horizontal",
-				scale = 0.3,
-			},
-		},
-	})
-	hl.plugin.scrolloverview.overview("on")
-	openedByAltTab = true
-	navigate_column("left")
-end
+function M.next() open_overview("right") end
+
+function M.prev() open_overview("left") end
 
 function M.close()
-	if openedByAltTab then
+	if opened_by_alt_tab then
 		hl.plugin.scrolloverview.overview("off")
-		openedByAltTab = false
+		opened_by_alt_tab = false
 	end
 end
 
