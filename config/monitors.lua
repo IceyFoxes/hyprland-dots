@@ -7,6 +7,8 @@ local main_mod = constants.main_mod
 local noct_prefix = constants.noct_prefix
 local timeout = constants.timeout
 
+local BUILT_IN_OUTPUT = "eDP-1"
+
 hl.monitor({
 	output = "desc:Acer Technologies EK221Q H 1335088483W01",
 	mode = "1920x1080@100",
@@ -22,7 +24,7 @@ hl.monitor({
 
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 hl.monitor({
-	output = "eDP-1",
+	output = BUILT_IN_OUTPUT,
 	mode = "preferred",
 	position = "auto",
 	scale = "1.5",
@@ -34,8 +36,12 @@ hl.monitor({
 ---- DISPLAY SHORTCUTS  ----
 ----------------------------
 local lid_closed = false
-local toggle_built_in = false
+local suppress_next_removed = false
 local built_in_disabled = false
+
+local function notify_no_external_monitor()
+	hl.notification.create({ text = "No external monitor detected", timeout = timeout.medium })
+end
 
 hl.bind("switch:on:Lid Switch", function()
 	local monitors = hl.get_monitors()
@@ -43,37 +49,37 @@ hl.bind("switch:on:Lid Switch", function()
 	if #monitors == 1 and not built_in_disabled then
 		hl.dispatch(hl.dsp.exec_cmd(noct_prefix .. " session lock-and-suspend"))
 	else
-		-- Disabling eDP-1 emits monitor.removed. Use the same one-shot guard as
+		-- Disabling BUILT_IN_OUTPUT emits monitor.removed. Use the same one-shot guard as
 		-- the manual toggle so it is not mistaken for an external unplug.
-		toggle_built_in = true
-		hl.monitor({ output = "eDP-1", disabled = true })
+		suppress_next_removed = true
+		hl.monitor({ output = BUILT_IN_OUTPUT, disabled = true })
 	end
 end, { locked = true })
 
 hl.bind("switch:off:Lid Switch", function()
 	lid_closed = false
-	hl.monitor({ output = "eDP-1", disabled = false })
+	hl.monitor({ output = BUILT_IN_OUTPUT, disabled = false })
 	hl.exec_cmd("hyprctl reload")
 end, { locked = true })
 
 local function toggle_built_in_display()
 	local monitors = hl.get_monitors()
-	if #monitors == 1 and monitors[1].name == "eDP-1" then
-		hl.notification.create({ text = "No external monitor detected", timeout = timeout.medium })
+	if #monitors == 1 and monitors[1].name == BUILT_IN_OUTPUT then
+		notify_no_external_monitor()
 		return
 	end
 
 	if lid_closed then return end
 
 	built_in_disabled = not built_in_disabled
-	if built_in_disabled then toggle_built_in = true end
-	hl.monitor({ output = "eDP-1", disabled = built_in_disabled })
+	if built_in_disabled then suppress_next_removed = true end
+	hl.monitor({ output = BUILT_IN_OUTPUT, disabled = built_in_disabled })
 end
 
 local function mirror_screen()
 	local monitors = hl.get_monitors()
 	if #monitors == 1 then
-		hl.notification.create({ text = "No external monitor detected", timeout = timeout.medium })
+		notify_no_external_monitor()
 		return
 	end
 
@@ -83,18 +89,21 @@ local function mirror_screen()
 		hl.exec_cmd("pkill -9 wl-mirror")
 	else
 		for _, monitor in ipairs(monitors) do
-			if monitor.name ~= "eDP-1" then
+			if monitor.name ~= BUILT_IN_OUTPUT then
 				hl.notification.create({
 					text = "Starting screen mirroring on " .. monitor.description,
 					timeout = timeout.medium,
 				})
-				hl.exec_cmd("wl-mirror eDP-1", { monitor = monitor.name, fullscreen = true })
+				hl.exec_cmd("wl-mirror " .. BUILT_IN_OUTPUT, { monitor = monitor.name, fullscreen = true })
 			end
 		end
 
 		-- Focus the built in display after a short delay to prevent the spawned wl-mirror
 		-- window from stealing focus
-		hl.timer(function() hl.dispatch(hl.dsp.focus({ monitor = "eDP-1" })) end, { timeout = 50, type = "oneshot" })
+		hl.timer(
+			function() hl.dispatch(hl.dsp.focus({ monitor = BUILT_IN_OUTPUT })) end,
+			{ timeout = 50, type = "oneshot" }
+		)
 	end
 end
 
@@ -127,14 +136,14 @@ hl.define_submap("displayControl", "reset", function()
 end)
 
 hl.on("monitor.removed", function()
-	if toggle_built_in then
-		toggle_built_in = false
+	if suppress_next_removed then
+		suppress_next_removed = false
 		return
 	end
 
 	if not lid_closed then
 		built_in_disabled = false
-		hl.monitor({ output = "eDP-1", disabled = built_in_disabled })
+		hl.monitor({ output = BUILT_IN_OUTPUT, disabled = built_in_disabled })
 		hl.exec_cmd("hyprctl reload")
 	else
 		hl.dsp.exec_cmd(noct_prefix .. " session lock-and-suspend")
