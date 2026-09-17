@@ -2,7 +2,7 @@
 ---- LOOK AND FEEL ----
 -----------------------
 
-local active_layout = "scrolling" -- "dwindle", "master", "scrolling"
+local active_layout = require("config.constants").active_layout
 
 -- Refer to https://wiki.hypr.land/Configuring/Basics/Variables/
 hl.config({
