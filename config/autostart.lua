@@ -2,25 +2,30 @@
 
 -- Autostart necessary processes (like notifications daemons, status bars, etc.)
 -- Or execute your favorite apps at launch like this:
-hl.on("hyprland.start", function()
+local start_cmds = {
 	-- important stuff
-	hl.exec_cmd("systemctl --user set-environment XDG_SESSION_CLASS=user")
-	hl.exec_cmd("systemctl --user start --no-block hyprland-session.target")
-	hl.exec_cmd("noctalia")
-	hl.exec_cmd("XDG_MENU_PREFIX=arch- kbuildsycoca6")
-	hl.exec_cmd("gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'")
-	hl.exec_cmd(
-		"systemd-inhibit --what=handle-lid-switch --who='Hyprland' --why='Custom lid handling' --mode=block sleep infinity &"
-	)
-	hl.exec_cmd("hypridle")
-	hl.exec_cmd("Telegram", { workspace = "special:magic" })
-	hl.exec_cmd("thunderbird", { workspace = "special:magic" })
-	hl.exec_cmd("brave-origin-nightly --app=https://web.whatsapp.com")
-	hl.exec_cmd(
-		"gdbus wait --session org.kde.StatusNotifierWatcher && QT_QPA_PLATFORM=xcb synology-drive start"
-	)
+	"systemctl --user set-environment XDG_SESSION_CLASS=user",
+	"systemctl --user start --no-block hyprland-session.target",
+	"noctalia",
+	"XDG_MENU_PREFIX=arch- kbuildsycoca6",
+	"gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'",
+	"systemd-inhibit --what=handle-lid-switch --who='Hyprland' --why='Custom lid handling' --mode=block sleep infinity &",
+	"hypridle",
+	{ cmd = "Telegram", opts = { workspace = "special:magic" } },
+	{ cmd = "thunderbird", opts = { workspace = "special:magic" } },
+	"brave-origin-nightly --app=https://web.whatsapp.com",
+	"gdbus wait --session org.kde.StatusNotifierWatcher && QT_QPA_PLATFORM=xcb synology-drive start",
+	"hyprpm reload",
+}
 
-	hl.exec_cmd("hyprpm reload")
+hl.on("hyprland.start", function()
+	for _, item in ipairs(start_cmds) do
+		if type(item) == "string" then
+			hl.exec_cmd(item)
+		else
+			hl.exec_cmd(item.cmd, item.opts)
+		end
+	end
 end)
 
 hl.on("hyprland.shutdown", function()
