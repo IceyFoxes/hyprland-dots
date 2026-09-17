@@ -7,7 +7,7 @@ local lt = utils.lt
 local gt = utils.gt
 local if_neighbor = utils.if_neighbor
 local if_any_neighbor = utils.if_any_neighbor
-local swap_workspaces = utils.swap_workspaces
+local move_workspace_id = utils.move_workspace_id
 local organize_workspaces = utils.organize_workspaces
 local layout_binding = utils.layout_binding
 local toggle_tiled_layout = utils.toggle_tiled_layout
@@ -168,28 +168,6 @@ hl.bind(
 		scrolling = move_down_or_workspace,
 	})
 )
-
-local function move_workspace_id(direction)
-	local ws = hl.get_active_workspace()
-	if not ws then return end
-
-	local curr_id = ws.id
-	local target_id = curr_id + direction
-	if target_id < 1 then return end
-
-	local target_ws = hl.get_workspace(target_id)
-	while target_ws and target_ws.monitor ~= ws.monitor do
-		target_id = target_id + direction
-		if target_id < 1 then return end
-		target_ws = hl.get_workspace(target_id)
-	end
-
-	if not target_ws then
-		hl.dispatch(hl.dsp.workspace.change_id({ workspace = curr_id, id = target_id }))
-	else
-		swap_workspaces(curr_id, target_id)
-	end
-end
 
 hl.bind(
 	main_mod .. " + ALT + E",
