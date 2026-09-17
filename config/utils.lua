@@ -77,10 +77,38 @@ function M.has_neighbor(axis, cmp)
 	return false
 end
 
+function M.has_any_neighbor(axis) return M.has_neighbor(axis, M.lt) or M.has_neighbor(axis, M.gt) end
+
+-- Return a keypress-time action dispatching `primary` when a neighbor exists
+-- in the given direction, otherwise `fallback`.
+function M.if_neighbor(axis, cmp, primary, fallback)
+	return function()
+		if M.has_neighbor(axis, cmp) then
+			hl.dispatch(primary)
+		else
+			hl.dispatch(fallback)
+		end
+	end
+end
+
+function M.if_any_neighbor(axis, primary, fallback)
+	return function()
+		if M.has_any_neighbor(axis) then
+			hl.dispatch(primary)
+		else
+			hl.dispatch(fallback)
+		end
+	end
+end
+
+-- Placeholder ID used to rotate two workspaces without collision.
+-- Staged with small delays so Hyprland processes each rename in order.
+local SWAP_PLACEHOLDER_ID = 99
+
 function M.swap_workspaces(curr_id, target_id)
 	if not curr_id or not target_id then return end
 	hl.timer(
-		function() hl.dispatch(hl.dsp.workspace.change_id({ workspace = target_id, id = 99 })) end,
+		function() hl.dispatch(hl.dsp.workspace.change_id({ workspace = target_id, id = SWAP_PLACEHOLDER_ID })) end,
 		{ timeout = 1, type = "oneshot" }
 	)
 	hl.timer(
@@ -88,7 +116,9 @@ function M.swap_workspaces(curr_id, target_id)
 		{ timeout = 10, type = "oneshot" }
 	)
 	hl.timer(
-		function() hl.dispatch(hl.dsp.workspace.change_id({ workspace = 99, id = curr_id })) end,
+		function()
+			hl.dispatch(hl.dsp.workspace.change_id({ workspace = SWAP_PLACEHOLDER_ID, id = curr_id }))
+		end,
 		{ timeout = 20, type = "oneshot" }
 	)
 end

@@ -1,9 +1,10 @@
 local constants = require("config.constants")
 local utils = require("config.utils")
 local main_mod = constants.main_mod
-local has_neighbor = utils.has_neighbor
 local lt = utils.lt
 local gt = utils.gt
+local if_neighbor = utils.if_neighbor
+local if_any_neighbor = utils.if_any_neighbor
 local layout_binding = utils.layout_binding
 local toggle_tiled_layout = utils.toggle_tiled_layout
 
@@ -58,64 +59,44 @@ local function setup_hyprscroll_overview()
 			main_mod .. " + H",
 			layout_binding({
 				dwindle = hl.dsp.window.move({ direction = "left" }),
-				scrolling = function()
-					if has_neighbor("y", lt) or has_neighbor("y", gt) then
-						hl.dispatch(hl.dsp.window.move({ direction = "left" }))
-					else
-						hl.dispatch(hl.dsp.layout("swapcol l"))
-					end
-				end,
+				scrolling = if_any_neighbor(
+					"y",
+					hl.dsp.window.move({ direction = "left" }),
+					hl.dsp.layout("swapcol l")
+				),
 			})
 		)
 		hl.bind(
 			main_mod .. " + L",
 			layout_binding({
 				dwindle = hl.dsp.window.move({ direction = "right" }),
-				scrolling = function()
-					if has_neighbor("y", lt) or has_neighbor("y", gt) then
-						hl.dispatch(hl.dsp.window.move({ direction = "right" }))
-					else
-						hl.dispatch(hl.dsp.layout("swapcol r"))
-					end
-				end,
+				scrolling = if_any_neighbor(
+					"y",
+					hl.dsp.window.move({ direction = "right" }),
+					hl.dsp.layout("swapcol r")
+				),
 			})
+		)
+		local move_up_or_workspace =
+			if_neighbor("y", lt, hl.dsp.window.move({ direction = "up" }), hl.dsp.window.move({ workspace = "r-1" }))
+		local move_down_or_workspace = if_neighbor(
+			"y",
+			gt,
+			hl.dsp.window.move({ direction = "down" }),
+			hl.dsp.window.move({ workspace = "r+1" })
 		)
 		hl.bind(
 			main_mod .. " + K",
 			layout_binding({
-				dwindle = function()
-					if has_neighbor("y", lt) then
-						hl.dispatch(hl.dsp.window.move({ direction = "up" }))
-					else
-						hl.dispatch(hl.dsp.window.move({ workspace = "r-1" }))
-					end
-				end,
-				scrolling = function()
-					if has_neighbor("y", lt) then
-						hl.dispatch(hl.dsp.window.move({ direction = "up" }))
-					else
-						hl.dispatch(hl.dsp.window.move({ workspace = "r-1" }))
-					end
-				end,
+				dwindle = move_up_or_workspace,
+				scrolling = move_up_or_workspace,
 			})
 		)
 		hl.bind(
 			main_mod .. " + J",
 			layout_binding({
-				dwindle = function()
-					if has_neighbor("y", gt) then
-						hl.dispatch(hl.dsp.window.move({ direction = "down" }))
-					else
-						hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
-					end
-				end,
-				scrolling = function()
-					if has_neighbor("y", gt) then
-						hl.dispatch(hl.dsp.window.move({ direction = "down" }))
-					else
-						hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
-					end
-				end,
+				dwindle = move_down_or_workspace,
+				scrolling = move_down_or_workspace,
 			})
 		)
 		hl.bind(

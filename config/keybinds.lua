@@ -3,9 +3,10 @@
 ---------------------
 
 local utils = require("config.utils")
-local has_neighbor = utils.has_neighbor
 local lt = utils.lt
 local gt = utils.gt
+local if_neighbor = utils.if_neighbor
+local if_any_neighbor = utils.if_any_neighbor
 local swap_workspaces = utils.swap_workspaces
 local organize_workspaces = utils.organize_workspaces
 local layout_binding = utils.layout_binding
@@ -21,8 +22,8 @@ hl.bind(main_mod .. " + Q", hl.dsp.exec_cmd(constants.terminal))
 hl.bind(main_mod .. " + B", hl.dsp.exec_cmd(constants.browser))
 hl.bind(main_mod .. " + SHIFT + B", hl.dsp.exec_cmd(constants.browser .. " --incognito"))
 hl.bind(main_mod .. " + W", hl.dsp.window.close())
-hl.bind(main_mod .. " + CTRL + W", hl.dsp.window.signal({ signal = 9 }))
-hl.bind(main_mod .. " + SHIFT + W", hl.dsp.window.signal({ signal = 3 }))
+hl.bind(main_mod .. " + CTRL + W", hl.dsp.window.signal({ signal = 9 })) -- SIGKILL
+hl.bind(main_mod .. " + SHIFT + W", hl.dsp.window.signal({ signal = 3 })) -- SIGQUIT
 hl.bind(main_mod .. " + E", hl.dsp.exec_cmd(constants.file_manager))
 
 -- noctalia commands
@@ -71,64 +72,48 @@ hl.bind(
 	main_mod .. " + H",
 	layout_binding({
 		dwindle = hl.dsp.focus({ direction = "left" }),
-		scrolling = function()
-			if has_neighbor("x", lt) then
-				hl.dispatch(hl.dsp.layout("focus l"))
-			else
-				hl.dispatch(hl.dsp.focus({ direction = "left" }))
-			end
-		end,
+		scrolling = if_neighbor("x", lt, hl.dsp.layout("focus l"), hl.dsp.focus({ direction = "left" })),
 	})
 )
 hl.bind(
 	main_mod .. " + L",
 	layout_binding({
 		dwindle = hl.dsp.focus({ direction = "right" }),
-		scrolling = function()
-			if has_neighbor("x", gt) then
-				hl.dispatch(hl.dsp.layout("focus r"))
-			else
-				hl.dispatch(hl.dsp.focus({ direction = "right" }))
-			end
-		end,
+		scrolling = if_neighbor("x", gt, hl.dsp.layout("focus r"), hl.dsp.focus({ direction = "right" })),
 	})
 )
 hl.bind(
 	main_mod .. " + K",
 	layout_binding({
-		dwindle = function()
-			if has_neighbor("y", lt) then
-				hl.dispatch(hl.dsp.focus({ direction = "up" }))
-			else
-				hl.dispatch(hl.dsp.focus({ workspace = "r-1" }))
-			end
-		end,
-		scrolling = function()
-			if has_neighbor("y", lt) then
-				hl.dispatch(hl.dsp.layout("focus u"))
-			else
-				hl.dispatch(hl.dsp.focus({ workspace = "r-1" }))
-			end
-		end,
+		dwindle = if_neighbor(
+			"y",
+			lt,
+			hl.dsp.focus({ direction = "up" }),
+			hl.dsp.focus({ workspace = "r-1" })
+		),
+		scrolling = if_neighbor(
+			"y",
+			lt,
+			hl.dsp.layout("focus u"),
+			hl.dsp.focus({ workspace = "r-1" })
+		),
 	})
 )
 hl.bind(
 	main_mod .. " + J",
 	layout_binding({
-		dwindle = function()
-			if has_neighbor("y", gt) then
-				hl.dispatch(hl.dsp.focus({ direction = "down" }))
-			else
-				hl.dispatch(hl.dsp.focus({ workspace = "r+1" }))
-			end
-		end,
-		scrolling = function()
-			if has_neighbor("y", gt) then
-				hl.dispatch(hl.dsp.layout("focus d"))
-			else
-				hl.dispatch(hl.dsp.focus({ workspace = "r+1" }))
-			end
-		end,
+		dwindle = if_neighbor(
+			"y",
+			gt,
+			hl.dsp.focus({ direction = "down" }),
+			hl.dsp.focus({ workspace = "r+1" })
+		),
+		scrolling = if_neighbor(
+			"y",
+			gt,
+			hl.dsp.layout("focus d"),
+			hl.dsp.focus({ workspace = "r+1" })
+		),
 	})
 )
 hl.bind(
@@ -147,64 +132,40 @@ hl.bind(
 	main_mod .. " + SHIFT + H",
 	layout_binding({
 		dwindle = hl.dsp.window.move({ direction = "left" }),
-		scrolling = function()
-			if has_neighbor("y", lt) or has_neighbor("y", gt) then
-				hl.dispatch(hl.dsp.window.move({ direction = "left" }))
-			else
-				hl.dispatch(hl.dsp.layout("swapcol l"))
-			end
-		end,
+		scrolling = if_any_neighbor(
+			"y",
+			hl.dsp.window.move({ direction = "left" }),
+			hl.dsp.layout("swapcol l")
+		),
 	})
 )
 hl.bind(
 	main_mod .. " + SHIFT + L",
 	layout_binding({
 		dwindle = hl.dsp.window.move({ direction = "right" }),
-		scrolling = function()
-			if has_neighbor("y", lt) or has_neighbor("y", gt) then
-				hl.dispatch(hl.dsp.window.move({ direction = "right" }))
-			else
-				hl.dispatch(hl.dsp.layout("swapcol r"))
-			end
-		end,
+		scrolling = if_any_neighbor(
+			"y",
+			hl.dsp.window.move({ direction = "right" }),
+			hl.dsp.layout("swapcol r")
+		),
 	})
 )
+local move_up_or_workspace =
+	if_neighbor("y", lt, hl.dsp.window.move({ direction = "up" }), hl.dsp.window.move({ workspace = "r-1" }))
+local move_down_or_workspace =
+	if_neighbor("y", gt, hl.dsp.window.move({ direction = "down" }), hl.dsp.window.move({ workspace = "r+1" }))
 hl.bind(
 	main_mod .. " + SHIFT + K",
 	layout_binding({
-		dwindle = function()
-			if has_neighbor("y", lt) then
-				hl.dispatch(hl.dsp.window.move({ direction = "up" }))
-			else
-				hl.dispatch(hl.dsp.window.move({ workspace = "r-1" }))
-			end
-		end,
-		scrolling = function()
-			if has_neighbor("y", lt) then
-				hl.dispatch(hl.dsp.window.move({ direction = "up" }))
-			else
-				hl.dispatch(hl.dsp.window.move({ workspace = "r-1" }))
-			end
-		end,
+		dwindle = move_up_or_workspace,
+		scrolling = move_up_or_workspace,
 	})
 )
 hl.bind(
 	main_mod .. " + SHIFT + J",
 	layout_binding({
-		dwindle = function()
-			if has_neighbor("y", gt) then
-				hl.dispatch(hl.dsp.window.move({ direction = "down" }))
-			else
-				hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
-			end
-		end,
-		scrolling = function()
-			if has_neighbor("y", gt) then
-				hl.dispatch(hl.dsp.window.move({ direction = "down" }))
-			else
-				hl.dispatch(hl.dsp.window.move({ workspace = "r+1" }))
-			end
-		end,
+		dwindle = move_down_or_workspace,
+		scrolling = move_down_or_workspace,
 	})
 )
 
