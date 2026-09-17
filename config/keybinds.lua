@@ -3,56 +3,57 @@
 ---------------------
 
 local utils = require("config.utils")
-local has_neighbor, lt, gt, swap_workspaces, organize_workspace, layout_binding, toggle_tiled_layout =
-	utils.has_neighbor,
-	utils.lt,
-	utils.gt,
-	utils.swap_workspaces,
-	utils.organize_workspaces,
-	utils.layout_binding,
-	utils.toggle_tiled_layout
+local has_neighbor = utils.has_neighbor
+local lt = utils.lt
+local gt = utils.gt
+local swap_workspaces = utils.swap_workspaces
+local organize_workspaces = utils.organize_workspaces
+local layout_binding = utils.layout_binding
+local toggle_tiled_layout = utils.toggle_tiled_layout
 
 local constants = require("config.constants")
-local mainMod, noctPrefix, timeout = constants.mainMod, constants.noctPrefix, constants.timeout
+local main_mod = constants.main_mod
+local noct_prefix = constants.noct_prefix
+local timeout = constants.timeout
 
 -- open apps
-hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(constants.terminal))
-hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(constants.browser))
-hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd(constants.browser .. " --incognito"))
-hl.bind(mainMod .. " + W", hl.dsp.window.close())
-hl.bind(mainMod .. " + SHIFT + W", hl.dsp.window.signal({ signal = 9 }))
-hl.bind(mainMod .. " + ALT + W", hl.dsp.window.signal({ signal = 3 }))
-hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(constants.fileManager))
+hl.bind(main_mod .. " + Q", hl.dsp.exec_cmd(constants.terminal))
+hl.bind(main_mod .. " + B", hl.dsp.exec_cmd(constants.browser))
+hl.bind(main_mod .. " + SHIFT + B", hl.dsp.exec_cmd(constants.browser .. " --incognito"))
+hl.bind(main_mod .. " + W", hl.dsp.window.close())
+hl.bind(main_mod .. " + CTRL + W", hl.dsp.window.signal({ signal = 9 }))
+hl.bind(main_mod .. " + SHIFT + W", hl.dsp.window.signal({ signal = 3 }))
+hl.bind(main_mod .. " + E", hl.dsp.exec_cmd(constants.file_manager))
 
 -- noctalia commands
-hl.bind(mainMod .. " + CTRL + L", hl.dsp.exec_cmd(constants.noctPrefix .. " panel-toggle session"))
-hl.bind(mainMod .. " + A", hl.dsp.exec_cmd(constants.noctPrefix .. " panel-toggle control-center"))
-hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd(constants.noctPrefix .. " panel-toggle clipboard"))
+hl.bind(main_mod .. " + CTRL + L", hl.dsp.exec_cmd(constants.noct_prefix .. " panel-toggle session"))
+hl.bind(main_mod .. " + A", hl.dsp.exec_cmd(constants.noct_prefix .. " panel-toggle control-center"))
+hl.bind(main_mod .. " + SHIFT + V", hl.dsp.exec_cmd(constants.noct_prefix .. " panel-toggle clipboard"))
 hl.bind("ALT + Tab", function()
 	for _, layer in ipairs(hl.get_layers()) do
 		if layer.namespace == "noctalia-window-switcher" then return end
 	end
-	hl.dispatch(hl.dsp.exec_cmd(constants.noctPrefix .. " window-switcher"))
+	hl.dispatch(hl.dsp.exec_cmd(constants.noct_prefix .. " window-switcher"))
 end, { non_consuming = true })
-hl.bind(mainMod .. " + SHIFT + F23", hl.dsp.exec_cmd(constants.menu))
+hl.bind(main_mod .. " + SHIFT + F23", hl.dsp.exec_cmd(constants.menu))
 
 -- command to lock: command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'
 
 -- Windowing controls
-hl.bind(mainMod .. " + V", function()
+hl.bind(main_mod .. " + V", function()
 	hl.dispatch(hl.dsp.window.float({ toggle = true }))
 	local monitor = hl.get_active_monitor()
 	if monitor then hl.dispatch(hl.dsp.window.resize({ x = monitor.width / 2, y = monitor.height / 2 })) end
 end)
 hl.bind(
-	mainMod .. " + T",
+	main_mod .. " + T",
 	layout_binding({
 		dwindle = hl.dsp.layout("togglesplit"),
 		scrolling = hl.dsp.layout("consume_or_expel prev"),
 	})
 )
-hl.bind(mainMod .. " + CTRL + T", toggle_tiled_layout)
-hl.bind(mainMod .. " + F", function()
+hl.bind(main_mod .. " + CTRL + T", toggle_tiled_layout)
+hl.bind(main_mod .. " + F", function()
 	local opts = { action = "toggle", internal = 2, client = 2 }
 	-- prevent helium from going fullscreen and hiding sidebar
 	local window = hl.get_active_window()
@@ -62,12 +63,12 @@ hl.bind(mainMod .. " + F", function()
 	end
 	hl.dispatch(hl.dsp.window.fullscreen_state(opts))
 end)
-hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
+hl.bind(main_mod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind("ALT + mouse:272", hl.dsp.window.resize(), { mouse = true })
 
--- Move focus with mainMod + arrow keys
+-- Move focus with main_mod + arrow keys
 hl.bind(
-	mainMod .. " + H",
+	main_mod .. " + H",
 	layout_binding({
 		dwindle = hl.dsp.focus({ direction = "left" }),
 		scrolling = function()
@@ -80,7 +81,7 @@ hl.bind(
 	})
 )
 hl.bind(
-	mainMod .. " + L",
+	main_mod .. " + L",
 	layout_binding({
 		dwindle = hl.dsp.focus({ direction = "right" }),
 		scrolling = function()
@@ -93,7 +94,7 @@ hl.bind(
 	})
 )
 hl.bind(
-	mainMod .. " + K",
+	main_mod .. " + K",
 	layout_binding({
 		dwindle = function()
 			if has_neighbor("y", lt) then
@@ -112,7 +113,7 @@ hl.bind(
 	})
 )
 hl.bind(
-	mainMod .. " + J",
+	main_mod .. " + J",
 	layout_binding({
 		dwindle = function()
 			if has_neighbor("y", gt) then
@@ -131,19 +132,19 @@ hl.bind(
 	})
 )
 hl.bind(
-	mainMod .. " + mouse_up",
+	main_mod .. " + mouse_up",
 	layout_binding({ scrolling = hl.dsp.layout("focus l") }),
 	{ mouse = true, non_consuming = false }
 )
 hl.bind(
-	mainMod .. " + mouse_down",
+	main_mod .. " + mouse_down",
 	layout_binding({ scrolling = hl.dsp.layout("focus r") }),
 	{ mouse = true, non_consuming = false }
 )
 
 -- Move the windows
 hl.bind(
-	mainMod .. " + SHIFT + H",
+	main_mod .. " + SHIFT + H",
 	layout_binding({
 		dwindle = hl.dsp.window.move({ direction = "left" }),
 		scrolling = function()
@@ -156,7 +157,7 @@ hl.bind(
 	})
 )
 hl.bind(
-	mainMod .. " + SHIFT + L",
+	main_mod .. " + SHIFT + L",
 	layout_binding({
 		dwindle = hl.dsp.window.move({ direction = "right" }),
 		scrolling = function()
@@ -169,7 +170,7 @@ hl.bind(
 	})
 )
 hl.bind(
-	mainMod .. " + SHIFT + K",
+	main_mod .. " + SHIFT + K",
 	layout_binding({
 		dwindle = function()
 			if has_neighbor("y", lt) then
@@ -188,7 +189,7 @@ hl.bind(
 	})
 )
 hl.bind(
-	mainMod .. " + SHIFT + J",
+	main_mod .. " + SHIFT + J",
 	layout_binding({
 		dwindle = function()
 			if has_neighbor("y", gt) then
@@ -230,17 +231,17 @@ local function move_workspace_id(direction)
 end
 
 hl.bind(
-	mainMod .. " + ALT + E",
+	main_mod .. " + ALT + E",
 	layout_binding({
 		common = hl.dsp.focus({ workspace = "emptym", on_current_monitor = true }),
 	})
 )
-hl.bind(mainMod .. " + CTRL + J", layout_binding({ common = function() move_workspace_id(1) end }))
-hl.bind(mainMod .. " + CTRL + K", layout_binding({ common = function() move_workspace_id(-1) end }))
+hl.bind(main_mod .. " + CTRL + J", layout_binding({ common = function() move_workspace_id(1) end }))
+hl.bind(main_mod .. " + CTRL + K", layout_binding({ common = function() move_workspace_id(-1) end }))
 
 -- Resize windows
 hl.bind(
-	mainMod .. " + ALT + H",
+	main_mod .. " + ALT + H",
 	layout_binding({
 		dwindle = hl.dsp.window.resize({ x = -50, y = 0, relative = true }),
 		scrolling = hl.dsp.layout("colresize -0.1"),
@@ -248,42 +249,42 @@ hl.bind(
 	{ repeating = true }
 )
 hl.bind(
-	mainMod .. " + ALT + L",
+	main_mod .. " + ALT + L",
 	layout_binding({
 		dwindle = hl.dsp.window.resize({ x = 50, y = 0, relative = true }),
 		scrolling = hl.dsp.layout("colresize +0.1"),
 	}),
 	{ repeating = true }
 )
-hl.bind(mainMod .. " + ALT + J", hl.dsp.window.resize({ x = 0, y = 50, relative = true }), { repeating = true })
-hl.bind(mainMod .. " + ALT + K", hl.dsp.window.resize({ x = 0, y = -50, relative = true }), { repeating = true })
+hl.bind(main_mod .. " + ALT + J", hl.dsp.window.resize({ x = 0, y = 50, relative = true }), { repeating = true })
+hl.bind(main_mod .. " + ALT + K", hl.dsp.window.resize({ x = 0, y = -50, relative = true }), { repeating = true })
 
--- Switch workspaces with mainMod + [0-9]
--- Move active window to a workspace with mainMod + SHIFT + [0-9]
+-- Switch workspaces with main_mod + [0-9]
+-- Move active window to a workspace with main_mod + SHIFT + [0-9]
 for i = 1, 10 do
 	local key = i % 10 -- 10 maps to key 0
-	hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ workspace = i }))
+	hl.bind(main_mod .. " + " .. key, hl.dsp.focus({ workspace = i }))
 end
 
 -- Switch to next/previous workspace
-hl.bind(mainMod .. " + SHIFT + mouse_down", hl.dsp.focus({ workspace = "r-1" }), { mouse = true })
-hl.bind(mainMod .. " + SHIFT + mouse_up", hl.dsp.focus({ workspace = "r+1" }), { mouse = true })
+hl.bind(main_mod .. " + SHIFT + mouse_down", hl.dsp.focus({ workspace = "r-1" }), { mouse = true })
+hl.bind(main_mod .. " + SHIFT + mouse_up", hl.dsp.focus({ workspace = "r+1" }), { mouse = true })
 -- Swap monitors
-hl.bind(mainMod .. " + SHIFT + T", hl.dsp.workspace.swap_monitors({ monitor1 = "current", monitor2 = "+1" }))
-hl.bind(mainMod .. " + ALT + T", hl.dsp.workspace.move({ monitor = "+1" }))
+hl.bind(main_mod .. " + SHIFT + T", hl.dsp.workspace.swap_monitors({ monitor1 = "current", monitor2 = "+1" }))
+hl.bind(main_mod .. " + ALT + T", hl.dsp.workspace.move({ monitor = "+1" }))
 
 -- special workspace (communication)
-hl.bind(mainMod .. " + S", hl.dsp.workspace.toggle_special("magic"))
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
+hl.bind(main_mod .. " + S", hl.dsp.workspace.toggle_special("magic"))
+hl.bind(main_mod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 
 -- organize workspaces
-hl.bind(mainMod .. " + CTRL + O", function()
+hl.bind(main_mod .. " + CTRL + O", function()
 	hl.notification.create({ text = "Organizing workspaces", timeout = timeout.medium })
-	organize_workspace()
+	organize_workspaces()
 end)
 
 -- Move windows to workspace
-hl.bind(mainMod .. " + M", function()
+hl.bind(main_mod .. " + M", function()
 	if hl.get_active_window() == nil then
 		hl.notification.create({ text = "No active window", timeout = timeout.medium })
 		return
@@ -335,16 +336,16 @@ hl.bind(
 )
 hl.bind(
 	"XF86MonBrightnessUp",
-	hl.dsp.exec_cmd(noctPrefix .. " brightness-up all 5"),
+	hl.dsp.exec_cmd(noct_prefix .. " brightness-up all 5"),
 	{ locked = true, repeating = true }
 )
 hl.bind(
 	"XF86MonBrightnessDown",
-	hl.dsp.exec_cmd(noctPrefix .. " brightness-down all 5"),
+	hl.dsp.exec_cmd(noct_prefix .. " brightness-down all 5"),
 	{ locked = true, repeating = true }
 )
 
-hl.bind("XF86Calculator", hl.dsp.exec_cmd(noctPrefix .. " media toggle"), { locked = true })
+hl.bind("XF86Calculator", hl.dsp.exec_cmd(noct_prefix .. " media toggle"), { locked = true })
 
 -- Printscreen
-hl.bind("Print", hl.dsp.exec_cmd(noctPrefix .. " screenshot-region"))
+hl.bind("Print", hl.dsp.exec_cmd(noct_prefix .. " screenshot-region"))

@@ -1,8 +1,11 @@
-local constants = require("config.constants")
-local mainMod, noctPrefix, timeout = constants.mainMod, constants.noctPrefix, constants.timeout
 ------------------
 ---- MONITORS ----
 ------------------
+
+local constants = require("config.constants")
+local main_mod = constants.main_mod
+local noct_prefix = constants.noct_prefix
+local timeout = constants.timeout
 
 hl.monitor({
 	output = "desc:Acer Technologies EK221Q H 1335088483W01",
@@ -38,7 +41,7 @@ hl.bind("switch:on:Lid Switch", function()
 	local monitors = hl.get_monitors()
 	lid_closed = true
 	if #monitors == 1 and not built_in_disabled then
-		hl.dispatch(hl.dsp.exec_cmd(noctPrefix .. " session lock-and-suspend"))
+		hl.dispatch(hl.dsp.exec_cmd(noct_prefix .. " session lock-and-suspend"))
 	else
 		-- Disabling eDP-1 emits monitor.removed. Use the same one-shot guard as
 		-- the manual toggle so it is not mistaken for an external unplug.
@@ -95,14 +98,14 @@ local function mirror_screen()
 	end
 end
 
-local displayBinds = {
+local display_binds = {
 	{ key = "T", desc = "Toggle built-in display", fn = toggle_built_in_display },
 	{ key = "M", desc = "Toggle mirroring", fn = mirror_screen },
 }
 
-hl.bind(mainMod .. " + P", function()
+hl.bind(main_mod .. " + P", function()
 	local parts = {}
-	for i, b in ipairs(displayBinds) do
+	for i, b in ipairs(display_binds) do
 		parts[i] = b.key .. ": " .. b.desc
 	end
 	hl.notification.create({
@@ -113,7 +116,7 @@ hl.bind(mainMod .. " + P", function()
 end)
 
 hl.define_submap("displayControl", "reset", function()
-	for _, b in ipairs(displayBinds) do
+	for _, b in ipairs(display_binds) do
 		hl.bind(b.key, b.fn)
 	end
 
@@ -134,6 +137,6 @@ hl.on("monitor.removed", function()
 		hl.monitor({ output = "eDP-1", disabled = built_in_disabled })
 		hl.exec_cmd("hyprctl reload")
 	else
-		hl.dsp.exec_cmd(noctPrefix .. " session lock-and-suspend")
+		hl.dsp.exec_cmd(noct_prefix .. " session lock-and-suspend")
 	end
 end)

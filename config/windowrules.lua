@@ -103,11 +103,6 @@ hl.window_rule({
 
 -- zoom
 hl.window_rule({
-	match = { class = "Zoom" },
-	no_blur = true,
-})
-
-hl.window_rule({
 	match = { class = "Zoom", initial_title = "negative:Zoom Workplace|Zoom Workplace - .*|Meeting" },
 	float = true,
 })
@@ -119,10 +114,8 @@ hl.window_rule({
 -- })
 
 hl.window_rule({
-	match = { class = "Zoom", title = "zoom_linux_float_video_window" },
-	float = true,
-	pin = true,
-	move = { "monitor_w * 0.8", "monitor_h * 0.2" },
+	match = { title = "as_toolbar" },
+	opacity = 0.5,
 })
 
 -- onlyoffice

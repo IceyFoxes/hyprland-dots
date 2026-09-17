@@ -1,6 +1,11 @@
-local mainMod, utils = require("config.constants").mainMod, require("config.utils")
-local has_neighbor, lt, gt, layout_binding, toggle_tiled_layout =
-	utils.has_neighbor, utils.lt, utils.gt, utils.layout_binding, utils.toggle_tiled_layout
+local constants = require("config.constants")
+local utils = require("config.utils")
+local main_mod = constants.main_mod
+local has_neighbor = utils.has_neighbor
+local lt = utils.lt
+local gt = utils.gt
+local layout_binding = utils.layout_binding
+local toggle_tiled_layout = utils.toggle_tiled_layout
 
 local function setup_hyprscroll_overview()
 	if hl.plugin.scrolloverview == nil then return end
@@ -30,7 +35,7 @@ local function setup_hyprscroll_overview()
 	hl.gesture({
 		fingers = 3,
 		direction = "pinchout",
-		action = function() hl.dispatch(so.overview("on")) end,
+		action = function() hl.dispatch(so.overview("on all")) end,
 	})
 
 	hl.gesture({
@@ -39,7 +44,7 @@ local function setup_hyprscroll_overview()
 		action = function() hl.dispatch(so.overview("off")) end,
 	})
 
-	hl.bind(mainMod .. " + tab", function() so.overview("toggle") end)
+	hl.bind(main_mod .. " + tab", function() so.overview("toggle all") end)
 
 	hl.define_submap("scrolloverview", function()
 		-- navigate the overview
@@ -50,7 +55,7 @@ local function setup_hyprscroll_overview()
 
 		-- move the windows
 		hl.bind(
-			mainMod .. " + H",
+			main_mod .. " + H",
 			layout_binding({
 				dwindle = hl.dsp.window.move({ direction = "left" }),
 				scrolling = function()
@@ -63,7 +68,7 @@ local function setup_hyprscroll_overview()
 			})
 		)
 		hl.bind(
-			mainMod .. " + L",
+			main_mod .. " + L",
 			layout_binding({
 				dwindle = hl.dsp.window.move({ direction = "right" }),
 				scrolling = function()
@@ -76,7 +81,7 @@ local function setup_hyprscroll_overview()
 			})
 		)
 		hl.bind(
-			mainMod .. " + K",
+			main_mod .. " + K",
 			layout_binding({
 				dwindle = function()
 					if has_neighbor("y", lt) then
@@ -95,7 +100,7 @@ local function setup_hyprscroll_overview()
 			})
 		)
 		hl.bind(
-			mainMod .. " + J",
+			main_mod .. " + J",
 			layout_binding({
 				dwindle = function()
 					if has_neighbor("y", gt) then
@@ -131,6 +136,13 @@ local function setup_hyprscroll_overview()
 		end, { mouse = true })
 		hl.bind("mouse:274", function() so.window("close") end, { mouse = true })
 	end)
+
+	-- local altTab = require("scripts.alttab")
+	--
+	-- hl.bind("ALT + Tab", altTab.next, { submap_universal = true })
+	-- hl.bind("ALT + SHIFT + Tab", altTab.prev, { submap_universal = true })
+	-- hl.bind("ALT + Alt_L", altTab.close, { release = true, transparent = true })
+	-- hl.bind("ALT + Alt_R", altTab.close, { release = true, transparent = true })
 end
 
 local function setup_dynamic_cursors()

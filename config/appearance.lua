@@ -14,7 +14,7 @@ hl.config({
 
 		col = {
 			active_border = { colors = { "rgba(b7dabf9a)", "rgba(ae8abd9a)" }, angle = 60 },
-			inactive_border = "rgba(595959aa)",
+			inactive_border = "rgba(59595922)",
 		},
 
 		-- Set to true to enable resizing windows by clicking and dragging on borders and gaps
@@ -27,7 +27,7 @@ hl.config({
 	},
 
 	decoration = {
-		rounding = 5,
+		rounding = 8,
 		rounding_power = 2,
 
 		-- Change transparency of focused and unfocused windows
@@ -92,7 +92,7 @@ hl.curve("quick", { type = "bezier", points = { { 0.15, 0 }, { 0.1, 1 } } })
 hl.curve("easy", { type = "spring", mass = 0.8, stiffness = 540, dampening = 36 })
 
 hl.animation({ leaf = "global", enabled = true, speed = 10, bezier = "default" })
-hl.animation({ leaf = "border", enabled = true, speed = 4, bezier = "linear" })
+hl.animation({ leaf = "border", enabled = true, speed = 3, bezier = "linear" })
 hl.animation({ leaf = "windows", enabled = true, speed = 0.2, spring = "easy" })
 hl.animation({ leaf = "fadeIn", enabled = true, speed = 1.73, bezier = "almostLinear" })
 hl.animation({ leaf = "fadeOut", enabled = true, speed = 1.46, bezier = "almostLinear" })
@@ -146,5 +146,3 @@ elseif active_layout == "scrolling" then
 		action = "workspace",
 	})
 end
-
-return { layout = active_layout }

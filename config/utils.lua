@@ -1,11 +1,14 @@
-local lt = function(a, b) return a < b end
-local gt = function(a, b) return a > b end
+local M = {}
+
+M.lt = function(a, b) return a < b end
+M.gt = function(a, b) return a > b end
+
 local timeout = require("config.constants").timeout
 
 local function get_active_tiled_workspace() return hl.get_active_special_workspace() or hl.get_active_workspace() end
 
 -- Select an action at keypress time so each workspace can use its own layout.
-local function layout_binding(actions)
+function M.layout_binding(actions)
 	return function()
 		local workspace = get_active_tiled_workspace()
 		if not workspace then
@@ -27,7 +30,7 @@ local function layout_binding(actions)
 	end
 end
 
-local function toggle_tiled_layout()
+function M.toggle_tiled_layout()
 	local workspace = get_active_tiled_workspace()
 	if not workspace then return end
 
@@ -37,11 +40,11 @@ local function toggle_tiled_layout()
 	hl.notification.create({ text = "Layout: " .. next_layout, timeout = timeout.short })
 end
 
-local function window_x(win)
+function M.window_x(win)
 	local at = win.at
 	return type(at) == "table" and (at.x or at[1]) or at
 end
-local function window_y(win)
+function M.window_y(win)
 	local at = win.at
 	return type(at) == "table" and (at.y or at[2]) or 0
 end
@@ -51,13 +54,13 @@ local function window_size(win, axis)
 	return type(size) == "table" and (size[axis] or size[axis == "x" and 1 or 2]) or size
 end
 
-local function has_neighbor(axis, cmp)
+function M.has_neighbor(axis, cmp)
 	local workspace = get_active_tiled_workspace()
 	local win = hl.get_active_window()
-	if not workspace or not win or win.fullscreen > 0 then return false end
+	if not workspace or not win then return false end
 
-	local along = axis == "x" and window_x or window_y
-	local across = axis == "x" and window_y or window_x
+	local along = axis == "x" and M.window_x or M.window_y
+	local across = axis == "x" and M.window_y or M.window_x
 	local cross_axis = axis == "x" and "y" or "x"
 
 	local position = along(win)
@@ -74,7 +77,7 @@ local function has_neighbor(axis, cmp)
 	return false
 end
 
-local function swap_workspaces(curr_id, target_id)
+function M.swap_workspaces(curr_id, target_id)
 	if not curr_id or not target_id then return end
 	hl.timer(
 		function() hl.dispatch(hl.dsp.workspace.change_id({ workspace = target_id, id = 99 })) end,
@@ -90,7 +93,7 @@ local function swap_workspaces(curr_id, target_id)
 	)
 end
 
-local function organize_workspaces()
+function M.organize_workspaces()
 	local monitors = {}
 	local monitor_names = {}
 	local max_id = 0
@@ -127,14 +130,4 @@ local function organize_workspaces()
 	end
 end
 
-return {
-	window_x = window_x,
-	window_y = window_y,
-	lt = lt,
-	gt = gt,
-	layout_binding = layout_binding,
-	toggle_tiled_layout = toggle_tiled_layout,
-	has_neighbor = has_neighbor,
-	swap_workspaces = swap_workspaces,
-	organize_workspaces = organize_workspaces,
-}
+return M
