@@ -5,17 +5,6 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Window-Rules/
 -- and https://wiki.hypr.land/Configuring/Basics/Workspace-Rules/
 
--- Example window rules that are useful
-
--- local suppressMaximizeRule = hl.window_rule({
--- 	-- Ignore maximize requests from all apps. You'll probably like this.
--- 	name = "suppress-maximize-events",
--- 	match = { class = ".*" },
---
--- 	suppress_event = "maximize",
--- })
--- suppressMaximizeRule:set_enabled(false)
-
 hl.workspace_rule({
 	workspace = "s[true]",
 	layout = "dwindle",
@@ -37,13 +26,6 @@ hl.window_rule({
 })
 
 -- Layer rules also return a handle.
--- local overlayLayerRule = hl.layer_rule({
--- 	name = "no-anim-overlay",
--- 	match = { namespace = "^my-overlay$" },
--- 	no_anim = true,
--- })
--- overlayLayerRule:set_enabled(false)
-
 hl.layer_rule({
 	name = "noctalia",
 	match = { namespace = "^noctalia-(bar-.+|notification|dock|panel|attached-panel|osd)$" },
@@ -107,12 +89,6 @@ hl.window_rule({
 	float = true,
 })
 
--- hl.window_rule({
--- 	match = { class = "Zoom", title = "Meeting" },
--- 	fullscreen_state = "1 3",
--- 	workspace = "emptynm",
--- })
-
 hl.window_rule({
 	match = { title = "as_toolbar" },
 	opacity = 0.5,
@@ -145,15 +121,3 @@ hl.window_rule({
 	match = { class = "com.github.xournalpp.xournalpp" },
 	workspace = "current",
 })
---
--- hl.on("window.active", function()
--- 	local prev_win = hl.get_last_window()
---
--- 	if prev_win and prev_win.fullscreen >= 2 and prev_win.fullscreen_client == 0 then
--- 		hl.dispatch(hl.dsp.window.fullscreen({
--- 			window = prev_win,
--- 			action = "unset",
--- 			mode = "fullscreen",
--- 		}))
--- 	end
--- end)
